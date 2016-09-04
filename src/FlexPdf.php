@@ -1220,7 +1220,7 @@ class FlexPdf {
 	/**
 	 * @return int
 	 */
-	function getX() {
+	public function getX() {
 		return $this->x;
 	}
 
@@ -1228,7 +1228,7 @@ class FlexPdf {
 	 * @param int $x
 	 * @return $this
 	 */
-	function setX( $x ) {
+	public function setX( $x ) {
 		if ( $x >= 0 ) {
 			$this->x = $x;
 		}
@@ -1238,7 +1238,7 @@ class FlexPdf {
 		return $this;
 	}
 
-	function getY() {
+	public function getY() {
 		return $this->y;
 	}
 
@@ -1247,7 +1247,7 @@ class FlexPdf {
 	 * @param bool $bResetX
 	 * @return $this
 	 */
-	function setY( $y, $bResetX = true ) {
+	public function setY( $y, $bResetX = true ) {
 		// Set y position and reset x
 		if ( $bResetX ) {
 			$this->x = $this->lMargin;
@@ -1266,13 +1266,13 @@ class FlexPdf {
 	 * @param int $y
 	 * @return $this
 	 */
-	function setXY( $x, $y ) {
+	public function setXY( $x, $y ) {
 		return $this
 			->setY( $y )
 			->setX( $x );
 	}
 
-	function output($name='', $dest='') {
+	public function output( $name = '', $dest = '' ) {
 		// Output PDF to some destination
 		if($this->state<3) {
 			$this->close();
@@ -2254,8 +2254,7 @@ class FlexPdf {
 		$this->_out('>>');
 	}
 
-	function _putresources()
-	{
+	private function _putresources() {
 		$this->_putfonts();
 		$this->_putimages();
 		// Resource dictionary
@@ -2267,8 +2266,7 @@ class FlexPdf {
 		$this->_out('endobj');
 	}
 
-	function _putinfo()
-	{
+	private function _putinfo() {
 		$this->_out('/Producer '.$this->_textstring('tFPDF '.tFPDF_VERSION));
 		if(!empty($this->title))
 			$this->_out('/Title '.$this->_textstring($this->title));
@@ -2283,8 +2281,7 @@ class FlexPdf {
 		$this->_out('/CreationDate '.$this->_textstring('D:'.@date('YmdHis')));
 	}
 
-	function _putcatalog()
-	{
+	private function _putcatalog() {
 		$this->_out('/Type /Catalog');
 		$this->_out('/Pages 1 0 R');
 		if($this->ZoomMode=='fullpage')
@@ -2303,20 +2300,17 @@ class FlexPdf {
 			$this->_out('/PageLayout /TwoColumnLeft');
 	}
 
-	function _putheader()
-	{
-		$this->_out('%PDF-'.$this->PDFVersion);
+	private function _putheader() {
+		$this->_out( '%PDF-'.$this->PDFVersion );
 	}
 
-	function _puttrailer()
-	{
+	private function _puttrailer() {
 		$this->_out('/Size '.($this->n+1));
 		$this->_out('/Root '.$this->n.' 0 R');
 		$this->_out('/Info '.($this->n-1).' 0 R');
 	}
 
-	function _enddoc()
-	{
+	private function _enddoc() {
 		$this->_putheader();
 		$this->_putpages();
 		$this->_putresources();
@@ -2334,25 +2328,27 @@ class FlexPdf {
 		$this->_out('endobj');
 		// Cross-ref
 		$o = strlen($this->buffer);
-		$this->_out('xref');
-		$this->_out('0 '.($this->n+1));
-		$this->_out('0000000000 65535 f ');
-		for($i=1;$i<=$this->n;$i++)
-			$this->_out(sprintf('%010d 00000 n ',$this->offsets[$i]));
+		$this->_out( 'xref' );
+		$this->_out( '0 '.($this->n+1) );
+		$this->_out( '0000000000 65535 f ' );
+		for ( $i = 1; $i <= $this->n; $i++ ) {
+			$this->_out( sprintf( '%010d 00000 n ', $this->offsets[$i] ) );
+		}
 		// Trailer
-		$this->_out('trailer');
-		$this->_out('<<');
+		$this->_out( 'trailer');
+		$this->_out( '<<');
 		$this->_puttrailer();
-		$this->_out('>>');
-		$this->_out('startxref');
-		$this->_out($o);
+		$this->_out( '>>');
+		$this->_out( 'startxref');
+		$this->_out( ''.$o );
 		$this->_out('%%EOF');
 		$this->state = 3;
+		return $this;
 	}
 
 	// ********* NEW FUNCTIONS *********
 	// Converts UTF-8 strings to UTF16-BE.
-	function UTF8ToUTF16BE($str, $setbom=true) {
+	private function UTF8ToUTF16BE( $str, $setbom=true ) {
 		$outstr = "";
 		if ($setbom) {
 			$outstr .= "\xFE\xFF"; // Byte Order Mark (BOM)
@@ -2362,7 +2358,7 @@ class FlexPdf {
 	}
 
 	// Converts UTF-8 strings to codepoints array
-	function UTF8StringToArray($str) {
+	private function UTF8StringToArray( $str ) {
 		$out = array();
 		$len = strlen($str);
 		for ($i = 0; $i < $len; $i++) {
@@ -2387,7 +2383,4 @@ class FlexPdf {
 		}
 		return $out;
 	}
-
-
-	// End of class
 }
