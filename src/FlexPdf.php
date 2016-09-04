@@ -1,67 +1,86 @@
-<?php
+<?php declare( strict_types = 1 );
 
+namespace DLGoodchild;
+
+/**
+ * This class was originally based off the tFPDF project on github (https://github.com/rev42/tfpdf)
+ * The main goals are to have a fluid interface, simpler usage and parameters per method, stricter
+ * typing through use of PHP7+ features.
+ *
+ * As I release newer versions I'll not be making any effort for it to be backwards compatible as
+ * this will only hold back progress.
+ *
+ * Requires: PHP 7.0+
+ *
+ * Class FlexPdf
+ * @package DLGoodchild
+ */
 class FlexPdf {
 
-	var $unifontSubset;
-	var $page;               // current page number
-	var $n;                  // current object number
-	var $offsets;            // array of object offsets
-	var $buffer;             // buffer holding in-memory PDF
-	var $pages;              // array containing pages
-	var $state;              // current document state
-	var $compress;           // compression flag
-	var $k;                  // scale factor (number of points in user unit)
-	var $DefOrientation;     // default orientation
-	var $CurOrientation;     // current orientation
-	var $StdPageSizes;       // standard page sizes
-	var $DefPageSize;        // default page size
-	var $CurPageSize;        // current page size
-	var $PageSizes;          // used for pages with non default sizes or orientations
-	var $wPt, $hPt;          // dimensions of current page in points
-	var $w, $h;              // dimensions of current page in user unit
-	var $lMargin;            // left margin
-	var $tMargin;            // top margin
-	var $rMargin;            // right margin
-	var $bMargin;            // page break margin
-	var $cMargin;            // cell margin
-	var $x, $y;              // current position in user unit
-	var $lasth;              // height of last printed cell
-	var $LineWidth;          // line width in user unit
-	var $fontpath;           // path containing fonts
-	var $CoreFonts;          // array of core font names
-	var $fonts;              // array of used fonts
-	var $FontFiles;          // array of font files
-	var $diffs;              // array of encoding differences
-	var $FontFamily;         // current font family
-	var $FontStyle;          // current font style
-	var $underline;          // underlining flag
-	var $CurrentFont;        // current font info
-	var $FontSizePt;         // current font size in points
-	var $FontSize;           // current font size in user unit
-	var $DrawColor;          // commands for drawing color
-	var $FillColor;          // commands for filling color
-	var $TextColor;          // commands for text color
-	var $ColorFlag;          // indicates whether fill and text colors are different
-	var $ws;                 // word spacing
-	var $images;             // array of used images
-	var $PageLinks;          // array of links in pages
-	var $links;              // array of internal links
-	var $AutoPageBreak;      // automatic page breaking
-	var $PageBreakTrigger;   // threshold used to trigger page breaks
-	var $InHeader;           // flag set when processing header
-	var $InFooter;           // flag set when processing footer
-	var $ZoomMode;           // zoom display mode
-	var $LayoutMode;         // layout display mode
-	var $title;              // title
-	var $subject;            // subject
-	var $author;             // author
-	var $keywords;           // keywords
-	var $creator;            // creator
-	var $AliasNbPages;       // alias for total number of pages
-	var $PDFVersion;         // PDF version number
+	private $unifontSubset;
+	private $page;               // current page number
+	private $n;                  // current object number
+	private $offsets;            // array of object offsets
+	private $buffer;             // buffer holding in-memory PDF
+	private $pages;              // array containing pages
+	private $state;              // current document state
+	private $compress;           // compression flag
+	private $k;                  // scale factor (number of points in user unit)
+	private $DefOrientation;     // default orientation
+	private $CurOrientation;     // current orientation
+	private $StdPageSizes;       // standard page sizes
+	private $DefPageSize;        // default page size
+	private $CurPageSize;        // current page size
+	private $PageSizes;          // used for pages with non default sizes or orientations
+	private $wPt, $hPt;          // dimensions of current page in points
+	private $w, $h;              // dimensions of current page in user unit
+	private $lMargin;            // left margin
+	private $tMargin;            // top margin
+	private $rMargin;            // right margin
+	private $bMargin;            // page break margin
+	private $cMargin;            // cell margin
+	private $x, $y;              // current position in user unit
+	private $lasth;              // height of last printed cell
+	private $LineWidth;          // line width in user unit
+	private $fontpath;           // path containing fonts
+	private $CoreFonts;          // array of core font names
+	private $fonts;              // array of used fonts
+	private $FontFiles;          // array of font files
+	private $diffs;              // array of encoding differences
+	private $FontFamily;         // current font family
+	private $FontStyle;          // current font style
+	private $underline;          // underlining flag
+	private $CurrentFont;        // current font info
+	private $FontSizePt;         // current font size in points
+	private $FontSize;           // current font size in user unit
+	private $DrawColor;          // commands for drawing color
+	private $FillColor;          // commands for filling color
+	private $TextColor;          // commands for text color
+	private $ColorFlag;          // indicates whether fill and text colors are different
+	private $ws;                 // word spacing
+	private $images;             // array of used images
+	private $PageLinks;          // array of links in pages
+	private $links;              // array of internal links
+	private $bAutoPageBreak;      // automatic page breaking
+	private $nPageBreakTrigger;   // threshold used to trigger page breaks
+	private $InHeader;           // flag set when processing header
+	private $InFooter;           // flag set when processing footer
+	private $ZoomMode;           // zoom display mode
+	private $LayoutMode;         // layout display mode
+	private $title;              // title
+	private $subject;            // subject
+	private $author;             // author
+	private $keywords;           // keywords
+	private $creator;            // creator
+	private $AliasNbPages;       // alias for total number of pages
+	private $PDFVersion;         // PDF version number
 
-	function __construct(string $orientation='P', string $unit='mm', string $size='A4')
-	{
+	/**
+	 * @param string $sOrientation
+	 * @param string $sUnit
+	 * @param string $sSize
+	 */
+	function __construct( string $sOrientation = 'P', string $sUnit = 'mm', string $sSize = 'A4' ) {
 		// Some checks
 		$this->_dochecks();
 		// Initialization of properties
@@ -88,52 +107,57 @@ class FlexPdf {
 		$this->TextColor = '0 g';
 		$this->ColorFlag = false;
 		$this->ws = 0;
+
 		// Font path
-		if(defined('FPDF_FONTPATH'))
-		{
+		if ( defined( 'FPDF_FONTPATH' ) ) {
 			$this->fontpath = FPDF_FONTPATH;
-			if(substr($this->fontpath,-1)!='/' && substr($this->fontpath,-1)!='\\')
+			if ( substr( $this->fontpath, -1 ) != '/' && substr( $this->fontpath, -1 ) != '\\' ) {
 				$this->fontpath .= '/';
+			}
 		}
-		elseif(is_dir(dirname(__FILE__).'/font'))
-			$this->fontpath = dirname(__FILE__).'/font/';
-		else
+		else if ( is_dir( __DIR__.'/font' ) ) {
+			$this->fontpath = __DIR__ . '/font/';
+		}
+		else {
 			$this->fontpath = '';
+		}
+
 		// Core fonts
 		$this->CoreFonts = array('courier', 'helvetica', 'times', 'symbol', 'zapfdingbats');
+
 		// Scale factor
-		if($unit=='pt')
+		if($sUnit=='pt')
 			$this->k = 1;
-		elseif($unit=='mm')
+		elseif($sUnit=='mm')
 			$this->k = 72/25.4;
-		elseif($unit=='cm')
+		elseif($sUnit=='cm')
 			$this->k = 72/2.54;
-		elseif($unit=='in')
+		elseif($sUnit=='in')
 			$this->k = 72;
 		else
-			$this->Error('Incorrect unit: '.$unit);
+			$this->Error('Incorrect unit: '.$sUnit);
 		// Page sizes
 		$this->StdPageSizes = array('a3'=>array(841.89,1190.55), 'a4'=>array(595.28,841.89), 'a5'=>array(420.94,595.28),
 			'letter'=>array(612,792), 'legal'=>array(612,1008));
-		$size = $this->_getpagesize($size);
-		$this->DefPageSize = $size;
-		$this->CurPageSize = $size;
+		$sSize = $this->_getpagesize($sSize);
+		$this->DefPageSize = $sSize;
+		$this->CurPageSize = $sSize;
 		// Page orientation
-		$orientation = strtolower($orientation);
-		if($orientation=='p' || $orientation=='portrait')
-		{
+		$sOrientation = strtolower( $sOrientation );
+		if ( $sOrientation == 'p' || $sOrientation == 'portrait' ) {
 			$this->DefOrientation = 'P';
-			$this->w = $size[0];
-			$this->h = $size[1];
+			$this->w = $sSize[0];
+			$this->h = $sSize[1];
 		}
-		elseif($orientation=='l' || $orientation=='landscape')
-		{
+		else if ( $sOrientation=='l' || $sOrientation=='landscape') {
 			$this->DefOrientation = 'L';
-			$this->w = $size[1];
-			$this->h = $size[0];
+			$this->w = $sSize[1];
+			$this->h = $sSize[0];
 		}
-		else
-			$this->Error('Incorrect orientation: '.$orientation);
+		else {
+			$this->Error( 'Incorrect orientation: ' . $sOrientation );
+		}
+
 		$this->CurOrientation = $this->DefOrientation;
 		$this->wPt = $this->w*$this->k;
 		$this->hPt = $this->h*$this->k;
@@ -154,126 +178,171 @@ class FlexPdf {
 		$this->PDFVersion = '1.3';
 	}
 
-	function SetMargins($left, $top, $right=null)
-	{
-		// Set left, top and right margins
+	/**
+	 * @param $left
+	 * @param $top
+	 * @param null $right
+	 * @return $this
+	 */
+	public function setMargins( $left, $top, $right = null ) {
 		$this->lMargin = $left;
 		$this->tMargin = $top;
-		if($right===null)
+		if ( $right === null ) {
 			$right = $left;
+		}
 		$this->rMargin = $right;
+		return $this;
 	}
 
-	function SetLeftMargin($margin)
-	{
-		// Set left margin
+	/**
+	 * @param $margin
+	 * @return $this
+	 */
+	public function setLeftMargin( $margin ) {
 		$this->lMargin = $margin;
-		if($this->page>0 && $this->x<$margin)
+		if ( $this->page > 0 && $this->x < $margin ) {
 			$this->x = $margin;
+		}
+		return $this;
 	}
 
-	function SetTopMargin($margin)
-	{
-		// Set top margin
+	/**
+	 * @param $margin
+	 * @return $this
+	 */
+	public function setTopMargin( $margin ) {
 		$this->tMargin = $margin;
+		return $this;
 	}
 
-	function SetRightMargin($margin)
-	{
-		// Set right margin
+	/**
+	 * @param $margin
+	 * @return $this
+	 */
+	public function setRightMargin( $margin ) {
 		$this->rMargin = $margin;
+		return $this;
 	}
 
-	function SetAutoPageBreak($auto, $margin=0)
-	{
-		// Set auto page break mode and triggering margin
-		$this->AutoPageBreak = $auto;
+	/**
+	 * @param $auto
+	 * @param int $margin
+	 * @return $this
+	 */
+	public function setAutoPageBreak( $auto, $margin = 0 ) {
+		$this->bAutoPageBreak = $auto;
 		$this->bMargin = $margin;
-		$this->PageBreakTrigger = $this->h-$margin;
+		$this->nPageBreakTrigger = ( $this->h - $margin );
+		return $this;
 	}
 
-	function SetDisplayMode($zoom, $layout='default')
-	{
-		// Set display mode in viewer
-		if($zoom=='fullpage' || $zoom=='fullwidth' || $zoom=='real' || $zoom=='default' || !is_string($zoom))
+	function SetDisplayMode($zoom, $layout='default') {
+		if ( $zoom == 'fullpage' || $zoom == 'fullwidth' || $zoom == 'real' || $zoom == 'default' || !is_string( $zoom ) ) {
 			$this->ZoomMode = $zoom;
-		else
-			$this->Error('Incorrect zoom display mode: '.$zoom);
-		if($layout=='single' || $layout=='continuous' || $layout=='two' || $layout=='default')
+		}
+		else {
+			$this->Error( 'Incorrect zoom display mode: ' . $zoom );
+		}
+
+		if ( $layout=='single' || $layout=='continuous' || $layout=='two' || $layout=='default' ) {
 			$this->LayoutMode = $layout;
-		else
-			$this->Error('Incorrect layout display mode: '.$layout);
+		}
+		else {
+			$this->Error( 'Incorrect layout display mode: ' . $layout );
+		}
+		return $this;
 	}
 
-	function SetCompression($compress)
-	{
-		// Set page compression
-		if(function_exists('gzcompress'))
-			$this->compress = $compress;
-		else
+	/**
+	 * @param bool $bCompress
+	 * @return $this
+	 */
+	public function setCompression( bool $bCompress ) {
+		if ( function_exists( 'gzcompress' ) ) {
+			$this->compress = $bCompress;
+		}
+		else {
 			$this->compress = false;
+		}
+		return $this;
 	}
 
-	function SetTitle($title, $isUTF8=false)
-	{
-		// Title of document
-		if($isUTF8)
-			$title = $this->_UTF8toUTF16($title);
+	/**
+	 * @param string $title
+	 * @param bool $isUTF8
+	 * @return $this
+	 */
+	public function setTitle( string $title, $isUTF8 = false ) {
+		if ( $isUTF8 ) {
+			$title = $this->_UTF8toUTF16( $title );
+		}
 		$this->title = $title;
+		return $this;
 	}
 
-	function SetSubject($subject, $isUTF8=false)
-	{
-		// Subject of document
-		if($isUTF8)
-			$subject = $this->_UTF8toUTF16($subject);
+	/**
+	 * @param string $subject
+	 * @param bool $isUTF8
+	 * @return $this
+	 */
+	public function setSubject( string $subject, $isUTF8 = false ) {
+		if ( $isUTF8 ) {
+			$subject = $this->_UTF8toUTF16( $subject );
+		}
 		$this->subject = $subject;
+		return $this;
 	}
 
-	function SetAuthor($author, $isUTF8=false)
-	{
-		// Author of document
-		if($isUTF8)
-			$author = $this->_UTF8toUTF16($author);
+	/**
+	 * @param string $author
+	 * @param bool $isUTF8
+	 * @return $this
+	 */
+	public function setAuthor( string $author, bool $isUTF8 = false ) {
+		if ( $isUTF8 ) {
+			$author = $this->_UTF8toUTF16( $author );
+		}
 		$this->author = $author;
+		return $this;
 	}
 
-	function SetKeywords($keywords, $isUTF8=false)
-	{
+	function setKeywords( string $keywords, bool $isUTF8=false) {
 		// Keywords of document
 		if($isUTF8)
 			$keywords = $this->_UTF8toUTF16($keywords);
 		$this->keywords = $keywords;
+		return $this;
 	}
 
-	function SetCreator($creator, $isUTF8=false)
-	{
+	function setCreator( string $creator, bool $isUTF8=false) {
 		// Creator of document
 		if($isUTF8)
 			$creator = $this->_UTF8toUTF16($creator);
 		$this->creator = $creator;
+		return $this;
 	}
 
-	function AliasNbPages($alias='{nb}')
-	{
+	function AliasNbPages( string $alias='{nb}' ) {
 		// Define an alias for total number of pages
 		$this->AliasNbPages = $alias;
+		return $this;
 	}
 
-	function Error($msg)
-	{
-		// Fatal error
-		die('<b>FPDF error:</b> '.$msg);
+	/**
+	 * @param string $sErrorMessage
+	 * @throws \Exception
+	 */
+	private function error( string $sErrorMessage ) {
+		throw new \Exception( sprintf( 'FlexPDF error: %s ', $sErrorMessage ) );
 	}
 
-	function Open()
-	{
+	function Open() {
 		// Begin document
 		$this->state = 1;
+		return $this;
 	}
 
-	function Close()
-	{
+	function Close() {
 		// Terminate document
 		if($this->state==3)
 			return;
@@ -677,14 +746,14 @@ class FlexPdf {
 	function AcceptPageBreak()
 	{
 		// Accept automatic page break or not
-		return $this->AutoPageBreak;
+		return $this->bAutoPageBreak;
 	}
 
 	function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link='')
 	{
 		// Output a cell
 		$k = $this->k;
-		if($this->y+$h>$this->PageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
+		if($this->y+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
 		{
 			// Automatic page break
 			$x = $this->x;
@@ -1111,7 +1180,7 @@ class FlexPdf {
 		// Flowing mode
 		if($y===null)
 		{
-			if($this->y+$h>$this->PageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
+			if($this->y+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
 			{
 				// Automatic page break
 				$x2 = $this->x;
@@ -1323,7 +1392,7 @@ class FlexPdf {
 			}
 			$this->wPt = $this->w*$this->k;
 			$this->hPt = $this->h*$this->k;
-			$this->PageBreakTrigger = $this->h-$this->bMargin;
+			$this->nPageBreakTrigger = $this->h-$this->bMargin;
 			$this->CurOrientation = $orientation;
 			$this->CurPageSize = $size;
 		}
