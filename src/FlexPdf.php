@@ -753,57 +753,61 @@ class FlexPdf {
 		return $this->bAutoPageBreak;
 	}
 
-	public function Cell( int $w, int $h=0, string $txt = '', int $border = 0, int $ln = 0, string $align = '', bool $fill = false, string $link = '') {
-		// Output a cell
+	public function Cell( $nWidth, $h = 0, string $txt = '', $border = 0, $ln = 0, string $align = '', bool $fill = false, string $link = '') {
 		$k = $this->k;
-		if($this->y+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
-		{
+		if ( ( $this->y + $h > $this->nPageBreakTrigger ) && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak() ) {
 			// Automatic page break
 			$x = $this->x;
 			$ws = $this->ws;
-			if($ws>0)
-			{
+			if ( $ws > 0 ) {
 				$this->ws = 0;
-				$this->_out('0 Tw');
+				$this->_out( '0 Tw' );
 			}
-			$this->AddPage($this->CurOrientation,$this->CurPageSize);
+			$this->addPage( $this->CurOrientation, $this->CurPageSize );
 			$this->x = $x;
-			if($ws>0)
-			{
+			if ( $ws > 0 ) {
 				$this->ws = $ws;
 				$this->_out(sprintf('%.3F Tw',$ws*$k));
 			}
 		}
-		if($w==0)
-			$w = $this->w-$this->rMargin-$this->x;
-		$s = '';
-		if($fill || $border==1)
-		{
-			if($fill)
-				$op = ($border==1) ? 'B' : 'f';
-			else
-				$op = 'S';
-			$s = sprintf('%.2F %.2F %.2F %.2F re %s ',$this->x*$k,($this->h-$this->y)*$k,$w*$k,-$h*$k,$op);
+		if($nWidth==0) {
+			$nWidth = $this->w - $this->rMargin - $this->x;
 		}
-		if(is_string($border))
-		{
+
+		$s = '';
+		if ( $fill || $border==1 ) {
+			if ( $fill ) {
+				$op = ( $border == 1 )? 'B': 'f';
+			}
+			else {
+				$op = 'S';
+			}
+			$s = sprintf( '%.2F %.2F %.2F %.2F re %s ',
+				$this->x * $k,
+				( $this->h - $this->y ) * $k,
+				$nWidth * $k,
+				-$h * $k,
+				$op
+			);
+		}
+
+		if ( is_string( $border ) ) {
 			$x = $this->x;
 			$y = $this->y;
 			if(strpos($border,'L')!==false)
 				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,$x*$k,($this->h-($y+$h))*$k);
 			if(strpos($border,'T')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,($x+$w)*$k,($this->h-$y)*$k);
+				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,($x+$nWidth)*$k,($this->h-$y)*$k);
 			if(strpos($border,'R')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',($x+$w)*$k,($this->h-$y)*$k,($x+$w)*$k,($this->h-($y+$h))*$k);
+				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',($x+$nWidth)*$k,($this->h-$y)*$k,($x+$nWidth)*$k,($this->h-($y+$h))*$k);
 			if(strpos($border,'B')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-($y+$h))*$k,($x+$w)*$k,($this->h-($y+$h))*$k);
+				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-($y+$h))*$k,($x+$nWidth)*$k,($this->h-($y+$h))*$k);
 		}
-		if($txt!=='')
-		{
+		if ( $txt !== '' ) {
 			if($align=='R')
-				$dx = $w-$this->cMargin-$this->GetStringWidth($txt);
+				$dx = $nWidth-$this->cMargin-$this->GetStringWidth($txt);
 			elseif($align=='C')
-				$dx = ($w-$this->GetStringWidth($txt))/2;
+				$dx = ($nWidth-$this->GetStringWidth($txt))/2;
 			else
 				$dx = $this->cMargin;
 			if($this->ColorFlag)
@@ -844,8 +848,9 @@ class FlexPdf {
 				$s .= ' '.$this->_dounderline($this->x+$dx,$this->y+.5*$h+.3*$this->FontSize,$txt);
 			if($this->ColorFlag)
 				$s .= ' Q';
-			if($link)
-				$this->Link($this->x+$dx,$this->y+.5*$h-.5*$this->FontSize,$this->GetStringWidth($txt),$this->FontSize,$link);
+			if($link) {
+				$this->link( $this->x + $dx, $this->y + .5 * $h - .5 * $this->FontSize, $this->GetStringWidth( $txt ), $this->FontSize, $link );
+			}
 		}
 		if($s)
 			$this->_out($s);
@@ -858,7 +863,7 @@ class FlexPdf {
 				$this->x = $this->lMargin;
 		}
 		else
-			$this->x += $w;
+			$this->x += $nWidth;
 
 		return $this;
 	}
@@ -922,10 +927,10 @@ class FlexPdf {
 					$this->_out('0 Tw');
 				}
 				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
+					$this->Cell( $w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 				}
 				else {
-					$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
+					$this->Cell( $w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 				}
 				$i++;
 				$sep = -1;
@@ -2329,11 +2334,4 @@ class FlexPdf {
 
 
 	// End of class
-}
-
-// Handle special IE contype request
-if(isset($_SERVER['HTTP_USER_AGENT']) && $_SERVER['HTTP_USER_AGENT']=='contype')
-{
-	header('Content-Type: application/pdf');
-	exit;
 }
