@@ -709,20 +709,30 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function SetFontSize( int $size ) {
-		// Set font size in points
-		if($this->FontSizePt==$size)
-			return;
+	/**
+	 * @param int $size
+	 * @return $this
+	 */
+	public function setFontSize( int $size ) {
+		if ( $this->FontSizePt == $size ) {
+			return $this;
+		}
+
 		$this->FontSizePt = $size;
-		$this->FontSize = $size/$this->k;
-		if($this->page>0)
-			$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
+		$this->FontSize = ( $size / $this->k );
+		if ( $this->page > 0 ) {
+			$this->_out( sprintf( 'BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt ) );
+		}
+		return $this;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function addLink() {
 		// Create a new internal link
-		$n = count($this->links)+1;
-		$this->links[$n] = array(0, 0);
+		$n = count( $this->links )+1;
+		$this->links[$n] = array( 0, 0 );
 		return $n;
 	}
 
