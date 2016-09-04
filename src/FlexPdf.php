@@ -564,7 +564,7 @@ class FlexPdf {
 			if (!isset($type) ||  !isset($name) || $originalsize != $ttfstat['size']) {
 				$ttffile = $ttffilename;
 				require_once($this->_getfontpath().'unifont/ttfonts.php');
-				$ttf = new TTFontFile();
+				$ttf = new \TTFontFile();
 				$ttf->getMetrics($ttffile);
 				$cw = $ttf->charWidths;
 				$name = preg_replace('/[ ()]/','',$ttf->fullName);
@@ -1888,7 +1888,7 @@ class FlexPdf {
 			else if ($type=='TTF') {
 				$this->fonts[$k]['n']=$this->n+1;
 				require_once($this->_getfontpath().'unifont/ttfonts.php');
-				$ttf = new TTFontFile();
+				$ttf = new \TTFontFile();
 				$fontname = 'MPDFAA'.'+'.$font['name'];
 				$subset = $font['subset'];
 				unset($subset[0]);
