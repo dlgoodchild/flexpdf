@@ -115,8 +115,8 @@ class FlexPdf {
 				$this->fontpath .= '/';
 			}
 		}
-		else if ( is_dir( __DIR__.'/font' ) ) {
-			$this->fontpath = __DIR__ . '/font/';
+		else if ( is_dir( __DIR__.'/../font' ) ) {
+			$this->fontpath = __DIR__ . '/../font/';
 		}
 		else {
 			$this->fontpath = '';
@@ -1316,43 +1316,38 @@ class FlexPdf {
 			@set_magic_quotes_runtime(0);
 	}
 
-	function _getfontpath()
-	{
+	private function _getfontpath() {
 		return $this->fontpath;
 	}
 
-	function _checkoutput()
-	{
-		if(PHP_SAPI!='cli')
-		{
+	private function _checkoutput() {
+		if ( PHP_SAPI!='cli') {
 			if(headers_sent($file,$line))
 				$this->Error("Some data has already been output, can't send PDF file (output started at $file:$line)");
 		}
-		if(ob_get_length())
-		{
+
+		if(ob_get_length()) {
 			// The output buffer is not empty
 			if(preg_match('/^(\xEF\xBB\xBF)?\s*$/',ob_get_contents()))
 			{
 				// It contains only a UTF-8 BOM and/or whitespace, let's clean it
 				ob_clean();
 			}
-			else
-				$this->Error("Some data has already been output, can't send PDF file");
+			else {
+				$this->Error( "Some data has already been output, can't send PDF file" );
+			}
 		}
 	}
 
-	function _getpagesize($size)
-	{
-		if(is_string($size))
-		{
+	private function _getpagesize($size) {
+		if(is_string($size)) {
 			$size = strtolower($size);
 			if(!isset($this->StdPageSizes[$size]))
 				$this->Error('Unknown page size: '.$size);
 			$a = $this->StdPageSizes[$size];
 			return array($a[0]/$this->k, $a[1]/$this->k);
 		}
-		else
-		{
+		else {
 			if($size[0]>$size[1])
 				return array($size[1], $size[0]);
 			else
@@ -1360,8 +1355,7 @@ class FlexPdf {
 		}
 	}
 
-	function _beginpage($orientation, $size)
-	{
+	private function _beginpage($orientation, $size) {
 		$this->page++;
 		$this->pages[$this->page] = '';
 		$this->state = 2;
@@ -1400,13 +1394,11 @@ class FlexPdf {
 			$this->PageSizes[$this->page] = array($this->wPt, $this->hPt);
 	}
 
-	function _endpage()
-	{
+	private function _endpage() {
 		$this->state = 1;
 	}
 
-	function _loadfont($font)
-	{
+	private function _loadfont($font) {
 		// Load a font definition file from the font directory
 		include($this->fontpath.$font);
 		$a = get_defined_vars();
@@ -1415,8 +1407,7 @@ class FlexPdf {
 		return $a;
 	}
 
-	function _escape($s)
-	{
+	private function _escape($s) {
 		// Escape special characters in strings
 		$s = str_replace('\\','\\\\',$s);
 		$s = str_replace('(','\\(',$s);
@@ -1425,14 +1416,12 @@ class FlexPdf {
 		return $s;
 	}
 
-	function _textstring($s)
-	{
+	private function _textstring( string $s): string {
 		// Format a text string
 		return '('.$this->_escape($s).')';
 	}
 
-	function _UTF8toUTF16($s)
-	{
+	function _UTF8toUTF16( string $s ): string {
 		// Convert UTF-8 to UTF-16BE with BOM
 		$res = "\xFE\xFF";
 		$nb = strlen($s);
@@ -1448,15 +1437,13 @@ class FlexPdf {
 				$res .= chr((($c1 & 0x0F)<<4) + (($c2 & 0x3C)>>2));
 				$res .= chr((($c2 & 0x03)<<6) + ($c3 & 0x3F));
 			}
-			elseif($c1>=192)
-			{
+			elseif($c1>=192) {
 				// 2-byte character
 				$c2 = ord($s[$i++]);
 				$res .= chr(($c1 & 0x1C)>>2);
 				$res .= chr((($c1 & 0x03)<<6) + ($c2 & 0x3F));
 			}
-			else
-			{
+			else {
 				// Single-byte character
 				$res .= "\0".chr($c1);
 			}
@@ -1464,8 +1451,7 @@ class FlexPdf {
 		return $res;
 	}
 
-	function _dounderline($x, $y, $txt)
-	{
+	private function _dounderline($x, $y, $txt) {
 		// Underline text
 		$up = $this->CurrentFont['up'];
 		$ut = $this->CurrentFont['ut'];
@@ -1473,8 +1459,7 @@ class FlexPdf {
 		return sprintf('%.2F %.2F %.2F %.2F re f',$x*$this->k,($this->h-($y-$up/1000*$this->FontSize))*$this->k,$w*$this->k,-$ut/1000*$this->FontSizePt);
 	}
 
-	function _parsejpg($file)
-	{
+	private function _parsejpg($file) {
 		// Extract info from a JPEG file
 		$a = getimagesize($file);
 		if(!$a)
@@ -1492,8 +1477,7 @@ class FlexPdf {
 		return array('w'=>$a[0], 'h'=>$a[1], 'cs'=>$colspace, 'bpc'=>$bpc, 'f'=>'DCTDecode', 'data'=>$data);
 	}
 
-	function _parsepng($file)
-	{
+	private function _parsepng($file) {
 		// Extract info from a PNG file
 		$f = fopen($file,'rb');
 		if(!$f)
@@ -1503,8 +1487,7 @@ class FlexPdf {
 		return $info;
 	}
 
-	function _parsepngstream($f, $file)
-	{
+	private function _parsepngstream($f, $file) {
 		// Check signature
 		if($this->_readstream($f,8)!=chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10))
 			$this->Error('Not a PNG file: '.$file);
@@ -1645,15 +1628,13 @@ class FlexPdf {
 		return $res;
 	}
 
-	function _readint($f)
-	{
+	private function _readint($f) {
 		// Read a 4-byte integer from stream
 		$a = unpack('Ni',$this->_readstream($f,4));
 		return $a['i'];
 	}
 
-	function _parsegif($file)
-	{
+	private function _parsegif($file) {
 		// Extract info from a GIF file (via PNG conversion)
 		if(!function_exists('imagepng'))
 			$this->Error('GD extension is required for GIF support');
@@ -1676,8 +1657,7 @@ class FlexPdf {
 			$info = $this->_parsepngstream($f,$file);
 			fclose($f);
 		}
-		else
-		{
+		else {
 			// Use temporary file
 			$tmp = tempnam('.','gif');
 			if(!$tmp)
@@ -1691,16 +1671,14 @@ class FlexPdf {
 		return $info;
 	}
 
-	function _newobj()
-	{
+	private function _newobj() {
 		// Begin a new object
 		$this->n++;
 		$this->offsets[$this->n] = strlen($this->buffer);
 		$this->_out($this->n.' 0 obj');
 	}
 
-	function _putstream($s)
-	{
+	private function _putstream($s) {
 		$this->_out('stream');
 		$this->_out($s);
 		$this->_out('endstream');
