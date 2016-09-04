@@ -126,16 +126,21 @@ class FlexPdf {
 		$this->CoreFonts = array('courier', 'helvetica', 'times', 'symbol', 'zapfdingbats');
 
 		// Scale factor
-		if($sUnit=='pt')
+		if ( $sUnit == 'pt' ) {
 			$this->k = 1;
-		elseif($sUnit=='mm')
-			$this->k = 72/25.4;
-		elseif($sUnit=='cm')
-			$this->k = 72/2.54;
-		elseif($sUnit=='in')
+		}
+		else if ( $sUnit == 'mm' ) {
+			$this->k = 72 / 25.4;
+		}
+		else if ( $sUnit == 'cm' ) {
+			$this->k = 72 / 2.54;
+		}
+		else if ( $sUnit == 'in' ) {
 			$this->k = 72;
-		else
-			$this->Error('Incorrect unit: '.$sUnit);
+		}
+		else {
+			$this->error( 'Incorrect unit: ' . $sUnit );
+		}
 		// Page sizes
 		$this->StdPageSizes = array('a3'=>array(841.89,1190.55), 'a4'=>array(595.28,841.89), 'a5'=>array(420.94,595.28),
 			'letter'=>array(612,792), 'legal'=>array(612,1008));
@@ -241,14 +246,14 @@ class FlexPdf {
 			$this->ZoomMode = $zoom;
 		}
 		else {
-			$this->Error( 'Incorrect zoom display mode: ' . $zoom );
+			$this->error( 'Incorrect zoom display mode: ' . $zoom );
 		}
 
 		if ( $layout=='single' || $layout=='continuous' || $layout=='two' || $layout=='default' ) {
 			$this->LayoutMode = $layout;
 		}
 		else {
-			$this->Error( 'Incorrect layout display mode: ' . $layout );
+			$this->error( 'Incorrect layout display mode: ' . $layout );
 		}
 		return $this;
 	}
@@ -336,13 +341,13 @@ class FlexPdf {
 		throw new \Exception( sprintf( 'FlexPDF error: %s ', $sErrorMessage ) );
 	}
 
-	function Open() {
+	public function open() {
 		// Begin document
 		$this->state = 1;
 		return $this;
 	}
 
-	function Close() {
+	public function close() {
 		// Terminate document
 		if($this->state==3)
 			return;
@@ -356,10 +361,10 @@ class FlexPdf {
 		$this->_endpage();
 		// Close document
 		$this->_enddoc();
+		return $this;
 	}
 
-	function AddPage($orientation='', $size='')
-	{
+	public function addPage($orientation='', $size='') {
 		// Start a new page
 		if($this->state==0)
 			$this->Open();
@@ -425,26 +430,24 @@ class FlexPdf {
 		}
 		$this->TextColor = $tc;
 		$this->ColorFlag = $cf;
+
+		return $this;
 	}
 
-	function Header()
-	{
+	public function Header() {
 		// To be implemented in your own inherited class
 	}
 
-	function Footer()
-	{
+	public function Footer() {
 		// To be implemented in your own inherited class
 	}
 
-	function PageNo()
-	{
+	public function pageNo() {
 		// Get current page number
 		return $this->page;
 	}
 
-	function SetDrawColor($r, $g=null, $b=null)
-	{
+	public function setDrawColor($r, $g=null, $b=null) {
 		// Set color for all stroking operations
 		if(($r==0 && $g==0 && $b==0) || $g===null)
 			$this->DrawColor = sprintf('%.3F G',$r/255);
@@ -452,10 +455,11 @@ class FlexPdf {
 			$this->DrawColor = sprintf('%.3F %.3F %.3F RG',$r/255,$g/255,$b/255);
 		if($this->page>0)
 			$this->_out($this->DrawColor);
+
+		return $this;
 	}
 
-	function SetFillColor($r, $g=null, $b=null)
-	{
+	public function setFillColor($r, $g=null, $b=null) {
 		// Set color for all filling operations
 		if(($r==0 && $g==0 && $b==0) || $g===null)
 			$this->FillColor = sprintf('%.3F g',$r/255);
@@ -464,20 +468,20 @@ class FlexPdf {
 		$this->ColorFlag = ($this->FillColor!=$this->TextColor);
 		if($this->page>0)
 			$this->_out($this->FillColor);
+		return $this;
 	}
 
-	function SetTextColor($r, $g=null, $b=null)
-	{
+	public function setTextColor($r, $g=null, $b=null) {
 		// Set color for text
 		if(($r==0 && $g==0 && $b==0) || $g===null)
 			$this->TextColor = sprintf('%.3F g',$r/255);
 		else
 			$this->TextColor = sprintf('%.3F %.3F %.3F rg',$r/255,$g/255,$b/255);
 		$this->ColorFlag = ($this->FillColor!=$this->TextColor);
+		return $this;
 	}
 
-	function GetStringWidth($s)
-	{
+	public function GetStringWidth($s) {
 		// Get width of a string in the current font
 		$s = (string)$s;
 		$cw = &$this->CurrentFont['cw'];
@@ -500,22 +504,23 @@ class FlexPdf {
 		return $w*$this->FontSize/1000;
 	}
 
-	function SetLineWidth($width)
-	{
+	public function setLineWidth($width) {
 		// Set line width
 		$this->LineWidth = $width;
 		if($this->page>0)
 			$this->_out(sprintf('%.2F w',$width*$this->k));
+
+		return $this;
 	}
 
-	function Line($x1, $y1, $x2, $y2)
-	{
+	public function line($x1, $y1, $x2, $y2) {
 		// Draw a line
 		$this->_out(sprintf('%.2F %.2F m %.2F %.2F l S',$x1*$this->k,($this->h-$y1)*$this->k,$x2*$this->k,($this->h-$y2)*$this->k));
+
+		return $this;
 	}
 
-	function Rect($x, $y, $w, $h, $style='')
-	{
+	public function rect($x, $y, $w, $h, $style='') {
 		// Draw a rectangle
 		if($style=='F')
 			$op = 'f';
@@ -524,10 +529,11 @@ class FlexPdf {
 		else
 			$op = 'S';
 		$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->k,($this->h-$y)*$this->k,$w*$this->k,-$h*$this->k,$op));
+
+		return $this;
 	}
 
-	function AddFont($family, $style='', $file='', $uni=false)
-	{
+	public function addFont($family, $style='', $file='', $uni=false) {
 		// Add a TrueType, OpenType or Type1 font
 		$family = strtolower($family);
 		$style = strtoupper($style);
@@ -637,8 +643,7 @@ class FlexPdf {
 		}
 	}
 
-	function SetFont($family, $style='', $size=0)
-	{
+	public function setFont( string $family, string $style='', int $size = 0 ) {
 		// Select a font; size given in points
 		if($family=='')
 			$family = $this->FontFamily;
@@ -687,10 +692,11 @@ class FlexPdf {
 		else { $this->unifontSubset = false; }
 		if($this->page>0)
 			$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
+
+		return $this;
 	}
 
-	function SetFontSize($size)
-	{
+	public function SetFontSize( int $size ) {
 		// Set font size in points
 		if($this->FontSizePt==$size)
 			return;
@@ -700,32 +706,30 @@ class FlexPdf {
 			$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
 	}
 
-	function AddLink()
-	{
+	public function addLink() {
 		// Create a new internal link
 		$n = count($this->links)+1;
 		$this->links[$n] = array(0, 0);
 		return $n;
 	}
 
-	function SetLink($link, $y=0, $page=-1)
-	{
+	public function setLink($link, $y=0, $page=-1) {
 		// Set destination of internal link
 		if($y==-1)
 			$y = $this->y;
 		if($page==-1)
 			$page = $this->page;
 		$this->links[$link] = array($page, $y);
+
+		return $this;
 	}
 
-	function Link($x, $y, $w, $h, $link)
-	{
-		// Put a link on the page
+	public function link( int $x, int $y, int $w, int $h, $link ) {
 		$this->PageLinks[$this->page][] = array($x*$this->k, $this->hPt-$y*$this->k, $w*$this->k, $h*$this->k, $link);
+		return $this;
 	}
 
-	function Text($x, $y, $txt)
-	{
+	public function text($x, $y, $txt) {
 		// Output a string
 		if ($this->unifontSubset)
 		{
@@ -741,16 +745,15 @@ class FlexPdf {
 		if($this->ColorFlag)
 			$s = 'q '.$this->TextColor.' '.$s.' Q';
 		$this->_out($s);
+		return $this;
 	}
 
-	function AcceptPageBreak()
-	{
+	public function AcceptPageBreak() {
 		// Accept automatic page break or not
 		return $this->bAutoPageBreak;
 	}
 
-	function Cell($w, $h=0, $txt='', $border=0, $ln=0, $align='', $fill=false, $link='')
-	{
+	public function Cell( int $w, int $h=0, string $txt = '', int $border = 0, int $ln = 0, string $align = '', bool $fill = false, string $link = '') {
 		// Output a cell
 		$k = $this->k;
 		if($this->y+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
@@ -856,10 +859,11 @@ class FlexPdf {
 		}
 		else
 			$this->x += $w;
+
+		return $this;
 	}
 
-	function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
-	{
+	public function MultiCell($w, $h, $txt, $border=0, $align='J', $fill=false) {
 		// Output text with automatic or explicit line breaks
 		$cw = &$this->CurrentFont['cw'];
 		if($w==0)
@@ -1003,6 +1007,8 @@ class FlexPdf {
 			$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 		}
 		$this->x = $this->lMargin;
+
+		return $this;
 	}
 
 	function Write($h, $txt, $link='')
