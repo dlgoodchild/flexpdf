@@ -641,22 +641,26 @@ class FlexPdf {
 			}
 			$this->fonts[$fontkey] = $info;
 		}
+		return $this;
 	}
 
 	public function setFont( string $family, string $style='', int $size = 0 ) {
 		// Select a font; size given in points
-		if($family=='')
+		if($family=='') {
 			$family = $this->FontFamily;
-		else
-			$family = strtolower($family);
+		}
+		else {
+			$family = strtolower( $family );
+		}
+
 		$style = strtoupper($style);
-		if(strpos($style,'U')!==false)
-		{
+		if(strpos($style,'U')!==false) {
 			$this->underline = true;
 			$style = str_replace('U','',$style);
 		}
-		else
+		else {
 			$this->underline = false;
+		}
 		if($style=='IB')
 			$style = 'BI';
 		if($size==0)
@@ -666,21 +670,23 @@ class FlexPdf {
 			return;
 		// Test if font is already loaded
 		$fontkey = $family.$style;
-		if(!isset($this->fonts[$fontkey]))
-		{
+		if(!isset($this->fonts[$fontkey])) {
 			// Test if one of the core fonts
-			if($family=='arial')
+			if($family=='arial') {
 				$family = 'helvetica';
-			if(in_array($family,$this->CoreFonts))
-			{
-				if($family=='symbol' || $family=='zapfdingbats')
-					$style = '';
-				$fontkey = $family.$style;
-				if(!isset($this->fonts[$fontkey]))
-					$this->AddFont($family,$style);
 			}
-			else
-				$this->Error('Undefined font: '.$family.' '.$style);
+			if (in_array($family,$this->CoreFonts)) {
+				if($family=='symbol' || $family=='zapfdingbats') {
+					$style = '';
+				}
+				$fontkey = $family.$style;
+				if(!isset($this->fonts[$fontkey])) {
+					$this->AddFont( $family, $style );
+				}
+			}
+			else {
+				$this->Error( 'Undefined font: ' . $family . ' ' . $style );
+			}
 		}
 		// Select it
 		$this->FontFamily = $family;
@@ -688,10 +694,17 @@ class FlexPdf {
 		$this->FontSizePt = $size;
 		$this->FontSize = $size/$this->k;
 		$this->CurrentFont = &$this->fonts[$fontkey];
-		if ($this->fonts[$fontkey]['type']=='TTF') { $this->unifontSubset = true; }
-		else { $this->unifontSubset = false; }
-		if($this->page>0)
-			$this->_out(sprintf('BT /F%d %.2F Tf ET',$this->CurrentFont['i'],$this->FontSizePt));
+
+		if ( $this->fonts[$fontkey]['type']=='TTF') {
+			$this->unifontSubset = true;
+		}
+		else {
+			$this->unifontSubset = false;
+		}
+
+		if ( $this->page > 0 ) {
+			$this->_out( sprintf( 'BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt ) );
+		}
 
 		return $this;
 	}
