@@ -1066,8 +1066,7 @@ class FlexPdf {
 				$sep = -1;
 				$j = $i;
 				$l = 0;
-				if($nl==1)
-				{
+				if($nl==1) {
 					$this->x = $this->lMargin;
 					$w = $this->w-$this->rMargin-$this->x;
 					$wmax = ($w-2*$this->cMargin);
@@ -1081,7 +1080,7 @@ class FlexPdf {
 			}
 
 			if ( $this->unifontSubset) {
-				$l += $this->getStringWidth($c);
+				$l += $this->getStringWidth( $c );
 			}
 			else {
 				$l += ( $cw[$c] * $this->FontSize/1000 );
@@ -1105,19 +1104,18 @@ class FlexPdf {
 					}
 
 					if ( $this->unifontSubset ) {
-						$this->Cell( $w, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 2, '', false, $sLink );
+						$this->cell( $w, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 2, '', false, $sLink );
 					}
 					else {
-						$this->Cell($w,$nHeight,substr($s,$j,$i-$j),0,2,'',0,$sLink);
+						$this->cell($w,$nHeight,substr($s,$j,$i-$j),0,2,'',0,$sLink);
 					}
 				}
-				else
-				{
+				else {
 					if ($this->unifontSubset) {
-						$this->Cell($w,$nHeight,mb_substr($s,$j,$sep-$j,'UTF-8'),0,2,'',false,$sLink);
+						$this->cell($w,$nHeight,mb_substr($s,$j,$sep-$j,'UTF-8'),0,2,'',false,$sLink);
 					}
 					else {
-						$this->Cell($w,$nHeight,substr( $s, $j, $sep - $j ), 0, 2, '', false, $sLink );
+						$this->cell($w,$nHeight,substr( $s, $j, $sep - $j ), 0, 2, '', false, $sLink );
 					}
 					$i = $sep+1;
 				}
@@ -1138,35 +1136,35 @@ class FlexPdf {
 		// Last chunk
 		if($i!=$j) {
 			if ($this->unifontSubset) {
-				$this->Cell($l,$nHeight,mb_substr($s,$j,$i-$j,'UTF-8'),0,0,'',0,$sLink);
+				$this->cell($l,$nHeight,mb_substr($s,$j,$i-$j,'UTF-8'),0,0,'',0,$sLink);
 			}
 			else {
-				$this->Cell($l,$nHeight,substr($s,$j),0,0,'',0,$sLink);
+				$this->cell($l,$nHeight,substr($s,$j),0,0,'',0,$sLink);
 			}
 		}
 	}
 
-	function Ln($h=null)
-	{
+	public function linefeed( $h = null ) {
 		// Line feed; default value is last cell height
 		$this->x = $this->lMargin;
-		if($h===null)
+		if ( $h === null ) {
 			$this->y += $this->lasth;
-		else
+		}
+		else {
 			$this->y += $h;
+		}
+		return $this;
 	}
 
-	function Image($file, $x=null, $y=null, $w=0, $h=0, $type='', $link='')
-	{
+	public function image( $file, $x=null, $y=null, $w=0, $h=0, $type='', $link='' ) {
 		// Put an image on the page
-		if(!isset($this->images[$file]))
-		{
+		if ( !isset( $this->images[$file] ) ) {
 			// First use of this image, get info
-			if($type=='')
-			{
-				$pos = strrpos($file,'.');
-				if(!$pos)
-					$this->Error('Image file has no extension and no type was specified: '.$file);
+			if ( $type == '' ) {
+				$pos = strrpos( $file, '.' );
+				if ( !$pos ) {
+					$this->error( 'Image file has no extension and no type was specified: ' . $file );
+				}
 				$type = substr($file,$pos+1);
 			}
 			$type = strtolower($type);
@@ -1183,8 +1181,7 @@ class FlexPdf {
 			$info = $this->images[$file];
 
 		// Automatic width and height calculation if needed
-		if($w==0 && $h==0)
-		{
+		if($w==0 && $h==0) {
 			// Put image at 96 dpi
 			$w = -96;
 			$h = -96;
@@ -1199,8 +1196,7 @@ class FlexPdf {
 			$h = $w*$info['h']/$info['w'];
 
 		// Flowing mode
-		if($y===null)
-		{
+		if($y===null) {
 			if($this->y+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
 			{
 				// Automatic page break
@@ -1215,55 +1211,72 @@ class FlexPdf {
 		if($x===null)
 			$x = $this->x;
 		$this->_out(sprintf('q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q',$w*$this->k,$h*$this->k,$x*$this->k,($this->h-($y+$h))*$this->k,$info['i']));
-		if($link)
-			$this->Link($x,$y,$w,$h,$link);
+		if($link) {
+			$this->link( $x, $y, $w, $h, $link );
+		}
+		return $this;
 	}
 
-	function GetX()
-	{
-		// Get x position
+	/**
+	 * @return int
+	 */
+	function getX() {
 		return $this->x;
 	}
 
-	function SetX($x)
-	{
-		// Set x position
-		if($x>=0)
+	/**
+	 * @param int $x
+	 * @return $this
+	 */
+	function setX( $x ) {
+		if ( $x >= 0 ) {
 			$this->x = $x;
-		else
-			$this->x = $this->w+$x;
+		}
+		else {
+			$this->x = $this->w + $x;
+		}
+		return $this;
 	}
 
-	function GetY()
-	{
-		// Get y position
+	function getY() {
 		return $this->y;
 	}
 
-	function SetY($y, $bResetX = true)
-	{
+	/**
+	 * @param int $y
+	 * @param bool $bResetX
+	 * @return $this
+	 */
+	function setY( $y, $bResetX = true ) {
 		// Set y position and reset x
 		if ( $bResetX ) {
 			$this->x = $this->lMargin;
 		}
-		if($y>=0)
+		if ( $y>= 0 ) {
 			$this->y = $y;
-		else
-			$this->y = $this->h+$y;
+		}
+		else {
+			$this->y = $this->h + $y;
+		}
+		return $this;
 	}
 
-	function SetXY($x, $y)
-	{
-		// Set x and y positions
-		$this->SetY($y);
-		$this->SetX($x);
+	/**
+	 * @param int $x
+	 * @param int $y
+	 * @return $this
+	 */
+	function setXY( $x, $y ) {
+		return $this
+			->setY( $y )
+			->setX( $x );
 	}
 
-	function Output($name='', $dest='')
-	{
+	function output($name='', $dest='') {
 		// Output PDF to some destination
-		if($this->state<3)
-			$this->Close();
+		if($this->state<3) {
+			$this->close();
+		}
 		$dest = strtoupper($dest);
 		if($dest=='')
 		{
@@ -1316,13 +1329,7 @@ class FlexPdf {
 		return '';
 	}
 
-	/*******************************************************************************
-	 *                                                                              *
-	 *                              Protected methods                               *
-	 *                                                                              *
-	 *******************************************************************************/
-	function _dochecks()
-	{
+	private function _dochecks() {
 		// Check availability of %F
 		if(sprintf('%.1F',1.0)!='1.0')
 			$this->Error('This version of PHP is not supported');
@@ -1335,6 +1342,7 @@ class FlexPdf {
 		// Ensure runtime magic quotes are disabled
 		if(get_magic_quotes_runtime())
 			@set_magic_quotes_runtime(0);
+		return $this;
 	}
 
 	private function _getfontpath() {
@@ -1343,8 +1351,9 @@ class FlexPdf {
 
 	private function _checkoutput() {
 		if ( PHP_SAPI!='cli') {
-			if(headers_sent($file,$line))
-				$this->Error("Some data has already been output, can't send PDF file (output started at $file:$line)");
+			if(headers_sent($file,$line)) {
+				$this->Error( "Some data has already been output, can't send PDF file (output started at $file:$line)" );
+			}
 		}
 
 		if(ob_get_length()) {
