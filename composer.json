@@ -16,7 +16,7 @@
 	},
 	"autoload": {
 		"psr-4": {
-			"DLGoodchild\\": ""
+			"DLGoodchild\\": "src"
 		},
 		"exclude-from-classmap": [
 			"/Tests/"
