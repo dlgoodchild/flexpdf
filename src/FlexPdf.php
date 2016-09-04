@@ -1278,8 +1278,7 @@ class FlexPdf {
 			$this->close();
 		}
 		$dest = strtoupper($dest);
-		if($dest=='')
-		{
+		if($dest=='') {
 			if($name=='')
 			{
 				$name = 'doc.pdf';
@@ -1288,8 +1287,7 @@ class FlexPdf {
 			else
 				$dest = 'F';
 		}
-		switch($dest)
-		{
+		switch($dest) {
 			case 'I':
 				// Send to standard output
 				$this->_checkoutput();
@@ -1315,8 +1313,9 @@ class FlexPdf {
 			case 'F':
 				// Save to local file
 				$f = fopen($name,'wb');
-				if(!$f)
-					$this->Error('Unable to create output file: '.$name);
+				if(!$f) {
+					$this->Error( 'Unable to create output file: ' . $name );
+				}
 				fwrite($f,$this->buffer,strlen($this->buffer));
 				fclose($f);
 				break;
@@ -1324,24 +1323,28 @@ class FlexPdf {
 				// Return as a string
 				return $this->buffer;
 			default:
-				$this->Error('Incorrect output destination: '.$dest);
+				$this->error('Incorrect output destination: '.$dest);
 		}
 		return '';
 	}
 
 	private function _dochecks() {
 		// Check availability of %F
-		if(sprintf('%.1F',1.0)!='1.0')
-			$this->Error('This version of PHP is not supported');
+		if ( sprintf( '%.1F', 1.0 ) != '1.0' ) {
+			$this->error( 'This version of PHP is not supported' );
+		}
 		// Check availability of mbstring
-		if(!function_exists('mb_strlen'))
-			$this->Error('mbstring extension is not available');
+		if ( !function_exists('mb_strlen')) {
+			$this->error( 'mbstring extension is not available' );
+		}
 		// Check mbstring overloading
-		if(ini_get('mbstring.func_overload') & 2)
-			$this->Error('mbstring overloading must be disabled');
+		if ( ini_get( 'mbstring.func_overload') & 2) {
+			$this->error( 'mbstring overloading must be disabled' );
+		}
 		// Ensure runtime magic quotes are disabled
-		if(get_magic_quotes_runtime())
-			@set_magic_quotes_runtime(0);
+		if ( get_magic_quotes_runtime() ) {
+			@set_magic_quotes_runtime( 0 );
+		}
 		return $this;
 	}
 
@@ -1352,19 +1355,18 @@ class FlexPdf {
 	private function _checkoutput() {
 		if ( PHP_SAPI!='cli') {
 			if(headers_sent($file,$line)) {
-				$this->Error( "Some data has already been output, can't send PDF file (output started at $file:$line)" );
+				$this->error( "Some data has already been output, can't send PDF file (output started at $file:$line)" );
 			}
 		}
 
 		if(ob_get_length()) {
 			// The output buffer is not empty
-			if(preg_match('/^(\xEF\xBB\xBF)?\s*$/',ob_get_contents()))
-			{
+			if(preg_match('/^(\xEF\xBB\xBF)?\s*$/',ob_get_contents())) {
 				// It contains only a UTF-8 BOM and/or whitespace, let's clean it
 				ob_clean();
 			}
 			else {
-				$this->Error( "Some data has already been output, can't send PDF file" );
+				$this->error( "Some data has already been output, can't send PDF file" );
 			}
 		}
 	}
@@ -1385,7 +1387,12 @@ class FlexPdf {
 		}
 	}
 
-	private function _beginpage($orientation, $size) {
+	/**
+	 * @param $orientation
+	 * @param $size
+	 * @return $this
+	 */
+	private function _beginpage( $orientation, $size ) {
 		$this->page++;
 		$this->pages[$this->page] = '';
 		$this->state = 2;
@@ -1422,42 +1429,50 @@ class FlexPdf {
 		}
 		if($orientation!=$this->DefOrientation || $size[0]!=$this->DefPageSize[0] || $size[1]!=$this->DefPageSize[1])
 			$this->PageSizes[$this->page] = array($this->wPt, $this->hPt);
+
+		return $this;
 	}
 
 	private function _endpage() {
 		$this->state = 1;
+		return $this;
 	}
 
-	private function _loadfont($font) {
+	/**
+	 * @param string $sFont
+	 * @return array
+	 */
+	private function _loadfont( string $sFont ) {
 		// Load a font definition file from the font directory
-		include($this->fontpath.$font);
+		include( $this->fontpath.$sFont );
+
 		$a = get_defined_vars();
-		if(!isset($a['name']))
-			$this->Error('Could not include font definition file');
+		if ( !isset( $a['name'] ) ) {
+			$this->Error( 'Could not include font definition file' );
+		}
 		return $a;
 	}
 
-	private function _escape($s) {
+	private function _escape( $sString ) {
 		// Escape special characters in strings
-		$s = str_replace('\\','\\\\',$s);
-		$s = str_replace('(','\\(',$s);
-		$s = str_replace(')','\\)',$s);
-		$s = str_replace("\r",'\\r',$s);
-		return $s;
+		$sString = str_replace( '\\', '\\\\', $sString );
+		$sString = str_replace( '(', '\\(', $sString );
+		$sString = str_replace( ')', '\\)', $sString );
+		$sString = str_replace( "\r", '\\r', $sString );
+		return $sString;
 	}
 
-	private function _textstring( string $s): string {
+	private function _textstring( string $sString ): string {
 		// Format a text string
-		return '('.$this->_escape($s).')';
+		return '('.$this->_escape( $sString ).')';
 	}
 
-	function _UTF8toUTF16( string $s ): string {
+	private function _UTF8toUTF16( string $s ): string {
 		// Convert UTF-8 to UTF-16BE with BOM
 		$res = "\xFE\xFF";
-		$nb = strlen($s);
+		$nb = strlen( $s );
 		$i = 0;
-		while($i<$nb)
-		{
+		while ( $i < $nb ) {
 			$c1 = ord($s[$i++]);
 			if($c1>=224)
 			{
@@ -1641,35 +1656,36 @@ class FlexPdf {
 		return $info;
 	}
 
-	function _readstream($f, $n)
-	{
+	private function _readstream($f, $n) {
 		// Read n bytes from stream
 		$res = '';
-		while($n>0 && !feof($f))
-		{
+		while($n>0 && !feof($f)) {
 			$s = fread($f,$n);
 			if($s===false)
 				$this->Error('Error while reading stream');
 			$n -= strlen($s);
 			$res .= $s;
 		}
-		if($n>0)
-			$this->Error('Unexpected end of stream');
+		if($n>0) {
+			$this->Error( 'Unexpected end of stream' );
+		}
 		return $res;
 	}
 
-	private function _readint($f) {
+	private function _readint( $f ) {
 		// Read a 4-byte integer from stream
 		$a = unpack('Ni',$this->_readstream($f,4));
 		return $a['i'];
 	}
 
-	private function _parsegif($file) {
+	private function _parsegif( $file ) {
 		// Extract info from a GIF file (via PNG conversion)
-		if(!function_exists('imagepng'))
-			$this->Error('GD extension is required for GIF support');
-		if(!function_exists('imagecreatefromgif'))
-			$this->Error('GD has no GIF read support');
+		if ( !function_exists('imagepng')) {
+			$this->Error( 'GD extension is required for GIF support' );
+		}
+		if ( !function_exists('imagecreatefromgif')) {
+			$this->Error( 'GD has no GIF read support' );
+		}
 		$im = imagecreatefromgif($file);
 		if(!$im)
 			$this->Error('Missing or incorrect image file: '.$file);
@@ -1701,33 +1717,49 @@ class FlexPdf {
 		return $info;
 	}
 
+	/**
+	 * Begin a new object within the document.
+	 * @return $this
+	 */
 	private function _newobj() {
-		// Begin a new object
 		$this->n++;
-		$this->offsets[$this->n] = strlen($this->buffer);
-		$this->_out($this->n.' 0 obj');
+		$this->offsets[$this->n] = strlen( $this->buffer );
+		$this->_out( $this->n.' 0 obj' );
+		return $this;
 	}
 
-	private function _putstream($s) {
-		$this->_out('stream');
-		$this->_out($s);
-		$this->_out('endstream');
+	/**
+	 * @param string $sString
+	 * @return $this
+	 */
+	private function _putstream( string $sString ) {
+		return $this
+			->_out( 'stream' )
+			->_out( $sString )
+			->_out( 'endstream' );
 	}
 
-	function _out($s)
-	{
-		// Add a line to the document
-		if($this->state==2)
-			$this->pages[$this->page] .= $s."\n";
-		else
-			$this->buffer .= $s."\n";
+	/**
+	 * Adds a line to the document, always appended with a newline
+	 * @param string $sString
+	 * @return $this
+	 */
+	private function _out( string $sString ) {
+		if ( $this->state == 2 ) {
+			$this->pages[$this->page] .= $sString . "\n";
+		}
+		else {
+			$this->buffer .= $sString . "\n";
+		}
+		return $this;
 	}
 
-	function _putpages()
-	{
+	/**
+	 *
+	 */
+	private function _putpages() {
 		$nb = $this->page;
-		if(!empty($this->AliasNbPages))
-		{
+		if ( !empty( $this->AliasNbPages ) ) {
 			// Replace number of pages in fonts using subsets
 			$alias = $this->UTF8ToUTF16BE($this->AliasNbPages, false);
 			$r = $this->UTF8ToUTF16BE("$nb", false);
@@ -1737,38 +1769,36 @@ class FlexPdf {
 			for($n=1;$n<=$nb;$n++)
 				$this->pages[$n] = str_replace($this->AliasNbPages,$nb,$this->pages[$n]);
 		}
-		if($this->DefOrientation=='P')
-		{
+
+		if($this->DefOrientation=='P') {
 			$wPt = $this->DefPageSize[0]*$this->k;
 			$hPt = $this->DefPageSize[1]*$this->k;
 		}
-		else
-		{
+		else {
 			$wPt = $this->DefPageSize[1]*$this->k;
 			$hPt = $this->DefPageSize[0]*$this->k;
 		}
 		$filter = ($this->compress) ? '/Filter /FlateDecode ' : '';
-		for($n=1;$n<=$nb;$n++)
-		{
+
+		for ( $n = 1; $n <= $nb; $n++ ) {
 			// Page
 			$this->_newobj();
 			$this->_out('<</Type /Page');
 			$this->_out('/Parent 1 0 R');
-			if(isset($this->PageSizes[$n]))
-				$this->_out(sprintf('/MediaBox [0 0 %.2F %.2F]',$this->PageSizes[$n][0],$this->PageSizes[$n][1]));
+			if(isset($this->PageSizes[$n])) {
+				$this->_out( sprintf( '/MediaBox [0 0 %.2F %.2F]', $this->PageSizes[$n][0], $this->PageSizes[$n][1] ) );
+			}
 			$this->_out('/Resources 2 0 R');
-			if(isset($this->PageLinks[$n]))
-			{
+			if(isset($this->PageLinks[$n])) {
 				// Links
 				$annots = '/Annots [';
-				foreach($this->PageLinks[$n] as $pl)
-				{
+				foreach($this->PageLinks[$n] as $pl ) {
 					$rect = sprintf('%.2F %.2F %.2F %.2F',$pl[0],$pl[1],$pl[0]+$pl[2],$pl[1]-$pl[3]);
 					$annots .= '<</Type /Annot /Subtype /Link /Rect ['.$rect.'] /Border [0 0 0] ';
-					if(is_string($pl[4]))
-						$annots .= '/A <</S /URI /URI '.$this->_textstring($pl[4]).'>>>>';
-					else
-					{
+					if ( is_string($pl[4])) {
+						$annots .= '/A <</S /URI /URI ' . $this->_textstring( $pl[4] ) . '>>>>';
+					}
+					else {
 						$l = $this->links[$pl[4]];
 						$h = isset($this->PageSizes[$l[0]]) ? $this->PageSizes[$l[0]][1] : $hPt;
 						$annots .= sprintf('/Dest [%d 0 R /XYZ 0 %.2F null]>>',1+2*$l[0],$h-$l[1]*$this->k);
@@ -1776,43 +1806,50 @@ class FlexPdf {
 				}
 				$this->_out($annots.']');
 			}
-			if($this->PDFVersion>'1.3')
-				$this->_out('/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>');
-			$this->_out('/Contents '.($this->n+1).' 0 R>>');
-			$this->_out('endobj');
+
+			if ( $this->PDFVersion > '1.3' ) {
+				$this->_out( '/Group <</Type /Group /S /Transparency /CS /DeviceRGB>>' );
+			}
+			$this->_out( '/Contents '.( $this->n + 1 ).' 0 R>>' );
+			$this->_out( 'endobj' );
+
 			// Page content
 			$p = ($this->compress) ? gzcompress($this->pages[$n]) : $this->pages[$n];
-			$this->_newobj();
-			$this->_out('<<'.$filter.'/Length '.strlen($p).'>>');
-			$this->_putstream($p);
-			$this->_out('endobj');
+
+			$this
+				->_newobj()
+				->_out( '<<'.$filter.'/Length '.strlen( $p ).'>>' )
+				->_putstream( $p )
+				->_out( 'endobj' );
 		}
 		// Pages root
-		$this->offsets[1] = strlen($this->buffer);
-		$this->_out('1 0 obj');
-		$this->_out('<</Type /Pages');
+		$this->offsets[1] = strlen( $this->buffer );
+		$this->_out( '1 0 obj' );
+		$this->_out( '<</Type /Pages' );
 		$kids = '/Kids [';
-		for($i=0;$i<$nb;$i++)
-			$kids .= (3+2*$i).' 0 R ';
-		$this->_out($kids.']');
-		$this->_out('/Count '.$nb);
-		$this->_out(sprintf('/MediaBox [0 0 %.2F %.2F]',$wPt,$hPt));
-		$this->_out('>>');
-		$this->_out('endobj');
+		for ( $i = 0; $i < $nb; $i++ ) {
+			$kids .= ( 3 + 2 * $i ) . ' 0 R ';
+		}
+		$this
+			->_out( $kids.']' )
+			->_out( '/Count '.$nb )
+			->_out( sprintf( '/MediaBox [0 0 %.2F %.2F]', $wPt, $hPt ) )
+			->_out( '>>' )
+			->_out( 'endobj' );
+
+		return $this;
 	}
 
-	function _putfonts()
-	{
+	private function _putfonts() {
 		$nf=$this->n;
-		foreach($this->diffs as $diff)
-		{
+		foreach($this->diffs as $diff) {
 			// Encodings
 			$this->_newobj();
 			$this->_out('<</Type /Encoding /BaseEncoding /WinAnsiEncoding /Differences ['.$diff.']>>');
 			$this->_out('endobj');
 		}
-		foreach($this->FontFiles as $file=>$info)
-		{
+
+		foreach($this->FontFiles as $file=>$info) {
 			if (!isset($info['type']) || $info['type']!='TTF') {
 				// Font file embedding
 				$this->_newobj();
