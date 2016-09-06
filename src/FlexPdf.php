@@ -237,7 +237,7 @@ class FlexPdf {
 			$this->h = $sSize[0];
 		}
 		else {
-
+			$this->error( 'Incorrect orientation: ' . $sOrientation );
 		}
 
 		$this->sCurrentOrientation = $this->sDefaultOrientation;
@@ -1400,31 +1400,48 @@ class FlexPdf {
 			->setX( $x );
 	}
 
+	/**
+	 * @return string
+	 */
+	public function getBuffer() {
+		return $this->sBuffer;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function raw() {
+		$this->close();
+		return $this->getBuffer();
+	}
+
 	public function output( $name = '', $dest = '' ) {
 		// Output PDF to some destination
-		if($this->sDocState<3) {
+		if ( $this->sDocState < 3 ) {
 			$this->close();
 		}
+
 		$dest = strtoupper($dest);
-		if($dest=='') {
-			if($name=='')
-			{
+		if ( $dest == '' ) {
+			if ( $name == '' ) {
 				$name = 'doc.pdf';
 				$dest = 'I';
 			}
-			else
+			else {
 				$dest = 'F';
+			}
 		}
-		switch($dest) {
+
+		switch ( $dest ) {
 			case 'I':
 				// Send to standard output
 				$this->_checkoutput();
-				if(PHP_SAPI!='cli') {
+				if ( PHP_SAPI != 'cli' ) {
 					// We send to a browser
-					header('Content-Type: application/pdf');
-					header('Content-Disposition: inline; filename="'.$name.'"');
-					header('Cache-Control: private, max-age=0, must-revalidate');
-					header('Pragma: public');
+					header( 'Content-Type: application/pdf' );
+					header( 'Content-Disposition: inline; filename="'.$name.'"' );
+					header( 'Cache-Control: private, max-age=0, must-revalidate' );
+					header( 'Pragma: public' );
 				}
 				echo $this->sBuffer;
 				break;
@@ -1460,15 +1477,15 @@ class FlexPdf {
 	}
 
 	private function _checkoutput() {
-		if ( PHP_SAPI!='cli') {
-			if(headers_sent($file,$line)) {
+		if ( PHP_SAPI != 'cli' ) {
+			if ( headers_sent( $file, $line ) ) {
 				$this->error( "Some data has already been output, can't send PDF file (output started at $file:$line)" );
 			}
 		}
 
-		if(ob_get_length()) {
+		if ( ob_get_length() ) {
 			// The output buffer is not empty
-			if(preg_match('/^(\xEF\xBB\xBF)?\s*$/',ob_get_contents())) {
+			if ( preg_match('/^(\xEF\xBB\xBF)?\s*$/',ob_get_contents() ) ) {
 				// It contains only a UTF-8 BOM and/or whitespace, let's clean it
 				ob_clean();
 			}
