@@ -891,41 +891,40 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function multiCell($w, $h, $txt, $border=0, $align='J', $fill=false) {
+	public function multiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
+	{
 		// Output text with automatic or explicit line breaks
 		$cw = &$this->CurrentFont['cw'];
 		if($w==0)
 			$w = $this->w-$this->rMargin-$this->x;
 		$wmax = ($w-2*$this->cMargin);
-		$str = str_replace("\r",'',$txt);
+		$s = str_replace("\r",'',$txt);
 		if ($this->unifontSubset) {
-			$nb=mb_strlen($str, 'utf-8');
-			while ( $nb > 0 && mb_substr( $str, $nb-1, 1, 'utf-8' ) == "\n" ) {
-				$nb--;
-			}
+			$nb=mb_strlen($s, 'utf-8');
+			while($nb>0 && mb_substr($s,$nb-1,1,'utf-8')=="\n")	$nb--;
 		}
 		else {
-			$nb = strlen($str);
-			if ( $nb > 0 && $str[$nb-1]== "\n" ) {
+			$nb = strlen($s);
+			if($nb>0 && $s[$nb-1]=="\n")
 				$nb--;
-			}
 		}
-		$border = 0;
-		if ( $border ) {
-			if ( $border == 1 ) {
+		$b = 0;
+		if($border)
+		{
+			if($border==1)
+			{
 				$border = 'LTRB';
-				$border = 'LRT';
+				$b = 'LRT';
 				$b2 = 'LR';
 			}
-			else {
+			else
+			{
 				$b2 = '';
-				if ( strpos( $border, 'L' ) !== false) {
+				if(strpos($border,'L')!==false)
 					$b2 .= 'L';
-				}
-				if ( strpos( $border, 'R' ) !== false ) {
+				if(strpos($border,'R')!==false)
 					$b2 .= 'R';
-				}
-				$border = ( strpos( $border, 'T' ) !== false )? $b2.'T': $b2;
+				$b = (strpos($border,'T')!==false) ? $b2.'T' : $b2;
 			}
 		}
 		$sep = -1;
@@ -934,81 +933,80 @@ class FlexPdf {
 		$l = 0;
 		$ns = 0;
 		$nl = 1;
-		while ( $i < $nb ) {
+		while($i<$nb)
+		{
 			// Get next character
-			if ( $this->unifontSubset ) {
-				$c = mb_substr( $str, $i, 1, 'UTF-8' );
+			if ($this->unifontSubset) {
+				$c = mb_substr($s,$i,1,'UTF-8');
 			}
 			else {
-				$c=$str[$i];
+				$c=$s[$i];
 			}
-
-			if ( $c == "\n" ) {
+			if($c=="\n")
+			{
 				// Explicit line break
-				if ( $this->ws > 0 ) {
+				if($this->ws>0)
+				{
 					$this->ws = 0;
-					$this->_out( '0 Tw' );
+					$this->_out('0 Tw');
 				}
-
-				if ( $this->unifontSubset ) {
-					$this->cell( $w, $h, mb_substr( $str, $j, $i-$j, 'UTF-8' ), $border, 2, $align, $fill );
+				if ($this->unifontSubset) {
+					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 				}
 				else {
-					$this->cell( $w, $h, substr( $str, $j, $i-$j ), $border, 2, $align, $fill );
+					$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 				}
-
 				$i++;
 				$sep = -1;
 				$j = $i;
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if ( $border && $nl == 2 ) {
-					$border = $b2;
-				}
+				if($border && $nl==2)
+					$b = $b2;
 				continue;
 			}
-			if ( $c == ' ' ) {
+			if($c==' ')
+			{
 				$sep = $i;
 				$ls = $l;
 				$ns++;
 			}
 
-			if ( $this->unifontSubset ) {
-				$l += $this->GetStringWidth( $c );
-			}
-			else {
-				$l += ( $cw[$c] * $this->FontSize/1000 );
-			}
+			if ($this->unifontSubset) { $l += $this->GetStringWidth($c); }
+			else { $l += $cw[$c]*$this->FontSize/1000; }
 
-			if ( $l > $wmax ) {
+			if($l>$wmax)
+			{
 				// Automatic line break
-				if ( $sep == -1 ) {
-					if ( $i == $j ) {
+				if($sep==-1)
+				{
+					if($i==$j)
 						$i++;
-					}
-					if ( $this->ws > 0 ) {
+					if($this->ws>0)
+					{
 						$this->ws = 0;
-						$this->_out( '0 Tw' );
+						$this->_out('0 Tw');
 					}
-					if ( $this->unifontSubset ) {
-						$this->cell( $w, $h, mb_substr( $str, $j, $i-$j, 'UTF-8' ), $border, 2, $align, $fill );
+					if ($this->unifontSubset) {
+						$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 					}
 					else {
-						$this->cell( $w, $h, substr( $str, $j, $i-$j ), $border, 2, $align, $fill );
+						$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 					}
 				}
-				else {
-					if ( $align == 'J' ) {
-						$this->ws = ($ns > 1)? ( ($wmax-$ls)/($ns-1) ): 0;
+				else
+				{
+					if($align=='J')
+					{
+						$this->ws = ($ns>1) ? ($wmax-$ls)/($ns-1) : 0;
 						$this->_out(sprintf('%.3F Tw',$this->ws*$this->k));
 					}
-
 					if ($this->unifontSubset) {
-						$this->cell($w,$h,mb_substr($str,$j,$sep-$j,'UTF-8'),$border,2,$align,$fill);
+						$this->Cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),$b,2,$align,$fill);
 					}
 					else {
-						$this->cell($w,$h,substr($str,$j,$sep-$j),$border,2,$align,$fill);
+						$this->Cell($w,$h,substr($s,$j,$sep-$j),$b,2,$align,$fill);
 					}
 					$i = $sep+1;
 				}
@@ -1017,32 +1015,28 @@ class FlexPdf {
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if ( $border && $nl==2) {
-					$border = $b2;
-				}
+				if($border && $nl==2)
+					$b = $b2;
 			}
 			else {
 				$i++;
 			}
 		}
 		// Last chunk
-		if ( $this->ws > 0 ) {
+		if($this->ws>0) {
 			$this->ws = 0;
-			$this->_out( '0 Tw' );
+			$this->_out('0 Tw');
 		}
-
-		if ( $border && strpos($border,'B')!==false) {
-			$border .= 'B';
+		if($border && strpos($border,'B')!==false) {
+			$b .= 'B';
 		}
-
-		if ( $this->unifontSubset ) {
-			$this->cell($w,$h,mb_substr($str,$j,$i-$j,'UTF-8'),$border,2,$align,$fill);
+		if ($this->unifontSubset) {
+			$this->cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 		}
 		else {
-			$this->cell($w,$h,substr($str,$j,$i-$j),$border,2,$align,$fill);
+			$this->cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 		}
 		$this->x = $this->lMargin;
-
 		return $this;
 	}
 
