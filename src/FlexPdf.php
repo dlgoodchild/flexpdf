@@ -592,102 +592,162 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function getStringWidth($s) {
+	/**
+	 * @param string $s
+	 * @return float
+	 */
+	public function getStringWidth( string $s ) {
 		// Get width of a string in the current font
 		$s = (string)$s;
+
 		$cw = &$this->CurrentFont['cw'];
 		$w=0;
-		if ($this->unifontSubset) {
-			$unicode = $this->UTF8StringToArray($s);
-			foreach($unicode as $char) {
-				if (isset($cw[$char])) { $w += (ord($cw[2*$char])<<8) + ord($cw[2*$char+1]); }
-				else if($char>0 && $char<128 && isset($cw[chr($char)])) { $w += $cw[chr($char)]; }
-				else if(isset($this->CurrentFont['desc']['MissingWidth'])) { $w += $this->CurrentFont['desc']['MissingWidth']; }
-				else if(isset($this->CurrentFont['MissingWidth'])) { $w += $this->CurrentFont['MissingWidth']; }
-				else { $w += 500; }
+
+		if ( $this->unifontSubset ) {
+			$unicode = $this->UTF8StringToArray( $s );
+			foreach ( $unicode as $char ) {
+				if ( isset( $cw[$char] ) ) {
+					$w += (ord($cw[2*$char])<<8) + ord($cw[2*$char+1]);
+				}
+				else if ( $char > 0 && $char < 128 && isset( $cw[chr( $char )] ) ) {
+					$w += $cw[chr( $char )];
+				}
+				else if ( isset( $this->CurrentFont['desc']['MissingWidth'] ) ) {
+					$w += $this->CurrentFont['desc']['MissingWidth'];
+				}
+				else if ( isset( $this->CurrentFont['MissingWidth'] ) ) {
+					$w += $this->CurrentFont['MissingWidth'];
+				}
+				else {
+					$w += 500;
+				}
 			}
 		}
 		else {
-			$l = strlen($s);
-			for($i=0;$i<$l;$i++)
+			$l = strlen( $s );
+			for ( $i=0; $i < $l; $i++ ) {
 				$w += $cw[$s[$i]];
+			}
 		}
-		return $w*$this->FontSize/1000;
+		return ( $w * $this->FontSize / 1000 );
 	}
 
-	public function setLineWidth($width) {
+	/**
+	 * @param int $nWidth
+	 * @return $this
+	 */
+	public function setLineWidth( $nWidth ) {
 		// Set line width
-		$this->LineWidth = $width;
-		if($this->nPageNumber>0)
-			$this->_out(sprintf('%.2F w',$width*$this->nScaleFactor));
+		$this->LineWidth = $nWidth;
+		if ( $this->nPageNumber > 0 ) {
+			$this->_out( sprintf( '%.2F w', $nWidth * $this->nScaleFactor ) );
+		}
 
 		return $this;
 	}
 
-	public function line($x1, $y1, $x2, $y2) {
-		// Draw a line
-		$this->_out(sprintf('%.2F %.2F m %.2F %.2F l S',$x1*$this->nScaleFactor,($this->h-$y1)*$this->nScaleFactor,$x2*$this->nScaleFactor,($this->h-$y2)*$this->nScaleFactor));
-
+	/**
+	 * @param int $x1
+	 * @param int $y1
+	 * @param int $x2
+	 * @param int $y2
+	 * @return $this
+	 */
+	public function line( int $x1, int $y1, int $x2, int $y2 ) {
+		$this->_out(
+			sprintf( '%.2F %.2F m %.2F %.2F l S',
+				$x1 * $this->nScaleFactor,
+				($this->h - $y1) * $this->nScaleFactor,
+				$x2 * $this->nScaleFactor,
+				($this->h - $y2) * $this->nScaleFactor
+			)
+		);
 		return $this;
 	}
 
-	public function rect($x, $y, $w, $h, $style='') {
-		// Draw a rectangle
-		if($style=='F')
+	/**
+	 * @param int $x
+	 * @param int $y
+	 * @param int $w
+	 * @param int $h
+	 * @param string $style
+	 * @return $this
+	 */
+	public function rect( int $x, int $y, int $w, int $h, string $style = '' ) {
+		if ( $style == 'F' ) {
 			$op = 'f';
-		elseif($style=='FD' || $style=='DF')
+		}
+		else if ( $style == 'FD' || $style == 'DF' ) {
 			$op = 'B';
-		else
+		}
+		else {
 			$op = 'S';
-		$this->_out(sprintf('%.2F %.2F %.2F %.2F re %s',$x*$this->nScaleFactor,($this->h-$y)*$this->nScaleFactor,$w*$this->nScaleFactor,-$h*$this->nScaleFactor,$op));
-
+		}
+		$this->_out(
+			sprintf( '%.2F %.2F %.2F %.2F re %s',
+				$x * $this->nScaleFactor,
+				($this->h - $y) * $this->nScaleFactor,
+				$w * $this->nScaleFactor,
+				-$h * $this->nScaleFactor,
+				$op
+			)
+		);
 		return $this;
 	}
 
-	public function addFont($family, $style='', $file='', $uni=false) {
+	public function addFont( string $family, string $style = '', string $file = '', $uni = false ) {
 		// Add a TrueType, OpenType or Type1 font
-		$family = strtolower($family);
-		$style = strtoupper($style);
-		if($style=='IB')
-			$style='BI';
-		if($file=='') {
-			if ($uni) {
-				$file = str_replace(' ','',$family).strtolower($style).'.ttf';
+		$family = strtolower( $family );
+		$style = strtoupper( $style );
+
+		if ( $style == 'IB' ) {
+			$style = 'BI';
+		}
+
+		if ( $file == '' ) {
+			$file = str_replace( ' ', '', $family ).strtolower( $style ).( $uni? '.ttf': '.php' );
+		}
+
+		$fontkey = $family.$style;
+		if ( isset( $this->fonts[$fontkey] ) ) {
+			return $this;
+		}
+
+		if ( $uni ) {
+			if (defined("_SYSTEM_TTFONTS") && file_exists(_SYSTEM_TTFONTS.$file )) {
+				$ttffilename = _SYSTEM_TTFONTS.$file;
 			}
 			else {
-				$file = str_replace(' ','',$family).strtolower($style).'.php';
+				$ttffilename = $this->_getfontpath().'unifont/'.$file;
 			}
-		}
-		$fontkey = $family.$style;
-		if(isset($this->fonts[$fontkey]))
-			return;
-
-		if ($uni) {
-			if (defined("_SYSTEM_TTFONTS") && file_exists(_SYSTEM_TTFONTS.$file )) { $ttffilename = _SYSTEM_TTFONTS.$file ; }
-			else { $ttffilename = $this->_getfontpath().'unifont/'.$file ; }
 			$unifilename = $this->_getfontpath().'unifont/'.strtolower(substr($file ,0,(strpos($file ,'.'))));
 			$name = '';
 			$originalsize = 0;
-			$ttfstat = stat($ttffilename);
-			if (file_exists($unifilename.'.mtx.php')) {
-				include($unifilename.'.mtx.php');
+			$ttfstat = stat( $ttffilename );
+			if ( file_exists( $unifilename.'.mtx.php' ) ) {
+				include( $unifilename.'.mtx.php' );
 			}
-			if (!isset($type) ||  !isset($name) || $originalsize != $ttfstat['size']) {
+
+			if ( !isset( $type ) || !isset( $name ) || $originalsize != $ttfstat['size']) {
 				$ttffile = $ttffilename;
-				require_once($this->_getfontpath().'unifont/ttfonts.php');
+				require_once( $this->_getfontpath().'unifont/ttfonts.php');
+
 				$ttf = new \TTFontFile();
 				$ttf->getMetrics($ttffile);
 				$cw = $ttf->charWidths;
 				$name = preg_replace('/[ ()]/','',$ttf->fullName);
 
-				$desc= array('Ascent'=>round($ttf->ascent),
+				$desc= array(
+					'Ascent'=>round($ttf->ascent),
 					'Descent'=>round($ttf->descent),
 					'CapHeight'=>round($ttf->capHeight),
 					'Flags'=>$ttf->flags,
 					'FontBBox'=>'['.round($ttf->bbox[0])." ".round($ttf->bbox[1])." ".round($ttf->bbox[2])." ".round($ttf->bbox[3]).']',
 					'ItalicAngle'=>$ttf->italicAngle,
 					'StemV'=>round($ttf->stemV),
-					'MissingWidth'=>round($ttf->defaultWidth));
+					'MissingWidth'=>round($ttf->defaultWidth)
+				);
+				
 				$up = round($ttf->underlinePosition);
 				$ut = round($ttf->underlineThickness);
 				$originalsize = $ttfstat['size']+0;
@@ -895,12 +955,13 @@ class FlexPdf {
 			$ws = $this->ws;
 			if ( $ws > 0 ) {
 				$this->ws = 0;
-				$this->_out( '0 Tw' );
+				$this->writeLineBreak();
 			}
 			$this->addPage( $this->sCurrentOrientation, $this->nCurrentPageSize );
 			$this->nPosX = $x;
 			if ( $ws > 0 ) {
 				$this->ws = $ws;
+				// todo: writeLineBreak with numeric param
 				$this->_out(sprintf('%.3F Tw',$ws*$k));
 			}
 		}
@@ -925,27 +986,39 @@ class FlexPdf {
 			);
 		}
 
+		// todo: draw border
 		if ( is_string( $border ) ) {
 			$x = $this->nPosX;
 			$y = $this->nPosY;
-			if(strpos($border,'L')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,$x*$k,($this->h-($y+$h))*$k);
-			if(strpos($border,'T')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-$y)*$k,($x+$nWidth)*$k,($this->h-$y)*$k);
-			if(strpos($border,'R')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',($x+$nWidth)*$k,($this->h-$y)*$k,($x+$nWidth)*$k,($this->h-($y+$h))*$k);
-			if(strpos($border,'B')!==false)
-				$s .= sprintf('%.2F %.2F m %.2F %.2F l S ',$x*$k,($this->h-($y+$h))*$k,($x+$nWidth)*$k,($this->h-($y+$h))*$k);
+
+			if(strpos($border,'L')!==false) {
+				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - $y ) * $k, $x * $k, ( $this->h - ( $y + $h ) ) * $k );
+			}
+			if(strpos($border,'T')!==false) {
+				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - $y ) * $k, ( $x + $nWidth ) * $k, ( $this->h - $y ) * $k );
+			}
+			if(strpos($border,'R')!==false) {
+				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', ( $x + $nWidth ) * $k, ( $this->h - $y ) * $k, ( $x + $nWidth ) * $k, ( $this->h - ( $y + $h ) ) * $k );
+			}
+			if(strpos($border,'B')!==false) {
+				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - ( $y + $h ) ) * $k, ( $x + $nWidth ) * $k, ( $this->h - ( $y + $h ) ) * $k );
+			}
 		}
+
 		if ( $txt !== '' ) {
-			if($align=='R')
-				$dx = $nWidth-$this->bMarginCell-$this->GetStringWidth($txt);
-			elseif($align=='C')
-				$dx = ($nWidth-$this->GetStringWidth($txt))/2;
-			else
+			if($align=='R') {
+				$dx = $nWidth - $this->bMarginCell - $this->getStringWidth( $txt );
+			}
+			else if ( $align == 'C' ) {
+				$dx = ( $nWidth - $this->getStringWidth( $txt ) ) / 2;
+			}
+			else {
 				$dx = $this->bMarginCell;
-			if($this->ColorFlag)
-				$s .= 'q '.$this->TextColor.' ';
+			}
+
+			if ( $this->ColorFlag) {
+				$s .= 'q ' . $this->TextColor . ' ';
+			}
 
 			// If multibyte, Tw has no effect - do word spacing using an adjustment before each space
 			if ($this->ws && $this->unifontSubset) {
@@ -1133,24 +1206,35 @@ class FlexPdf {
 				$i++;
 			}
 		}
+
 		// Last chunk
-		if($this->ws>0) {
+		if ( $this->ws > 0 ) {
 			$this->ws = 0;
-			$this->_out('0 Tw');
+			$this->writeLineBreak();
 		}
-		if($border && strpos($border,'B')!==false) {
+
+		if ( $border && strpos( $border, 'B' ) !== false ) {
 			$b .= 'B';
 		}
-		if ($this->unifontSubset) {
-			$this->cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-		}
-		else {
-			$this->cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-		}
+
+		$this->cell( $w, $h, $this->subString( $s, $j, $i-$j ), $b, 2, $align, $fill );
+
 		$this->nPosX = $this->nMarginLeft;
 		return $this;
 	}
 
+	/**
+	 * @return FlexPdf
+	 */
+	private function writeLineBreak() {
+		return $this->_out( '0 Tw' );
+	}
+
+	/**
+	 * @param int $nHeight
+	 * @param string $sText
+	 * @param string $sLink
+	 */
 	function write( $nHeight, $sText, $sLink = '' ) {
 		// Output text in flowing mode
 		$cw = &$this->CurrentFont['cw'];
@@ -1160,7 +1244,7 @@ class FlexPdf {
 		$s = str_replace( "\r", '', $sText );
 		if ( $this->unifontSubset ) {
 			$nb = mb_strlen($s, 'UTF-8');
-			if($nb==1 && $s==" ") {
+			if ( $nb==1 && $s==" ") {
 				$this->nPosX += $this->getStringWidth( $s );
 				return;
 			}
@@ -1168,15 +1252,17 @@ class FlexPdf {
 		else {
 			$nb = strlen( $s );
 		}
+
 		$sep = -1;
 		$i = 0;
 		$j = 0;
 		$l = 0;
 		$nl = 1;
-		while($i<$nb) {
+
+		while ( $i < $nb ) {
 			// Get next character
-			if ($this->unifontSubset) {
-				$c = mb_substr($s,$i,1,'UTF-8');
+			if ( $this->unifontSubset ) {
+				$c = mb_substr( $s,$i, 1, 'UTF-8' );
 			}
 			else {
 				$c = $s[$i];
@@ -1184,17 +1270,13 @@ class FlexPdf {
 
 			if ( $c == "\n" ) {
 				// Explicit line break
-				if ($this->unifontSubset) {
-					$this->cell($w,$nHeight,mb_substr($s,$j,$i-$j,'UTF-8'),0,2,'',0,$sLink);
-				}
-				else {
-					$this->cell($w,$nHeight,substr($s,$j,$i-$j),0,2,'',0,$sLink);
-				}
+				$this->cell( $w, $nHeight, $this->subString( $s, $j, $i-$j ), 0, 2, '', false, $sLink );
+
 				$i++;
 				$sep = -1;
 				$j = $i;
 				$l = 0;
-				if($nl==1) {
+				if ( $nl == 1 ) {
 					$this->nPosX = $this->nMarginLeft;
 					$w = $this->w-$this->nMarginRight-$this->nPosX;
 					$wmax = ($w-2*$this->bMarginCell);
@@ -1227,120 +1309,182 @@ class FlexPdf {
 						$nl++;
 						continue;
 					}
+
 					if ( $i == $j ) {
 						$i++;
 					}
 
-					if ( $this->unifontSubset ) {
-						$this->cell( $w, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 2, '', false, $sLink );
-					}
-					else {
-						$this->cell($w,$nHeight,substr($s,$j,$i-$j),0,2,'',0,$sLink);
-					}
+					$this->cell( $w, $nHeight, $this->subString( $s, $j, $i-$j ), 0, 2, '', false, $sLink );
 				}
 				else {
-					if ($this->unifontSubset) {
-						$this->cell($w,$nHeight,mb_substr($s,$j,$sep-$j,'UTF-8'),0,2,'',false,$sLink);
-					}
-					else {
-						$this->cell($w,$nHeight,substr( $s, $j, $sep - $j ), 0, 2, '', false, $sLink );
-					}
+					$this->cell( $w, $nHeight, $this->subString( $s, $j, $sep-$j ), 0, 2, '', false, $sLink );
 					$i = $sep+1;
 				}
+
 				$sep = -1;
 				$j = $i;
 				$l = 0;
-				if($nl==1)
-				{
+				if ( $nl == 1 ) {
 					$this->nPosX = $this->nMarginLeft;
 					$w = $this->w-$this->nMarginRight-$this->nPosX;
 					$wmax = ($w-2*$this->bMarginCell);
 				}
 				$nl++;
 			}
-			else
+			else {
 				$i++;
+			}
 		}
 		// Last chunk
-		if($i!=$j) {
-			if ($this->unifontSubset) {
-				$this->cell($l,$nHeight,mb_substr($s,$j,$i-$j,'UTF-8'),0,0,'',0,$sLink);
+		if ( $i != $j ) {
+			if ( $this->unifontSubset ) {
+				$this->cell( $l, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 0, '', false, $sLink );
 			}
 			else {
-				$this->cell($l,$nHeight,substr($s,$j),0,0,'',0,$sLink);
+				$this->cell($l,$nHeight,substr($s,$j),0,0,'',false,$sLink);
 			}
 		}
 	}
 
-	public function linefeed( $h = null ) {
+	/**
+	 * @param string $sText
+	 * @param int $nStart
+	 * @param int $nLength
+	 * @return string
+	 */
+	public function subString( string $sText, int $nStart, int $nLength ) {
+		return (
+			$this->unifontSubset?
+				mb_substr( $sText, $nStart, $nLength, 'UTF-8' ):
+				   substr( $sText, $nStart, $nLength )
+			);
+	}
+
+	/**
+	 * @param int $nLineHeight
+	 * @return $this
+	 */
+	public function linefeed( $nLineHeight = null ) {
 		// Line feed; default value is last cell height
 		$this->nPosX = $this->nMarginLeft;
-		if ( $h === null ) {
+		if ( $nLineHeight === null ) {
 			$this->nPosY += $this->lasth;
 		}
 		else {
-			$this->nPosY += $h;
+			$this->nPosY += $nLineHeight;
 		}
 		return $this;
 	}
 
-	public function image( $file, $x=null, $y=null, $w=0, $h=0, $type='', $link='' ) {
-		// Put an image on the page
-		if ( !isset( $this->images[$file] ) ) {
-			// First use of this image, get info
-			if ( $type == '' ) {
-				$pos = strrpos( $file, '.' );
-				if ( !$pos ) {
-					$this->error( 'Image file has no extension and no type was specified: ' . $file );
-				}
-				$type = substr($file,$pos+1);
-			}
-			$type = strtolower($type);
-			if($type=='jpeg')
-				$type = 'jpg';
-			$mtd = '_parse'.$type;
-			if(!method_exists($this,$mtd))
-				$this->Error('Unsupported image type: '.$type);
-			$info = $this->$mtd($file);
-			$info['i'] = count($this->images)+1;
-			$this->images[$file] = $info;
-		}
-		else
-			$info = $this->images[$file];
+	/**
+	 * @param string $sFile
+	 * @return bool
+	 */
+	public function isImageFileAdded( string $sFile ): bool {
+		return ( isset( $this->images[$sFile] ) );
+	}
 
-		// Automatic width and height calculation if needed
-		if($w==0 && $h==0) {
-			// Put image at 96 dpi
-			$w = -96;
-			$h = -96;
+	/**
+	 * @param string $sFile
+	 * @param string $sType
+	 * @return array
+	 * @throws \Exception
+	 */
+	public function getImageInfo( string $sFile, string $sType = null ) {
+		if ( empty( $sType ) ) {
+			$nDotPos = strrpos( $sFile, '.' );
+			if ( $nDotPos === false ) {
+				throw new \Exception( sprintf( 'Image file has no extension and no type was specified: %s', $sFile ) );
+			}
+			$sType = substr( $sFile, $nDotPos + 1 );
 		}
-		if($w<0)
-			$w = -$info['w']*72/$w/$this->nScaleFactor;
-		if($h<0)
-			$h = -$info['h']*72/$h/$this->nScaleFactor;
-		if($w==0)
-			$w = $h*$info['w']/$info['h'];
-		if($h==0)
-			$h = $w*$info['h']/$info['w'];
+
+		$sType = strtolower( $sType );
+		if ( $sType == 'jpeg' ) {
+			$sType = 'jpg';
+		}
+
+		$sInfoMethod = sprintf( '_parse%s', $sType );
+		if ( !method_exists( $this, $sInfoMethod ) ) {
+			throw new \Exception( sprintf( 'Unsupported image type: %s', $sType ) );
+		}
+
+		$aFileInfo = $this->{$sInfoMethod}( $sFile );
+		$aFileInfo['i'] = count( $this->images ) + 1;
+		$aFileInfo['index'] = count( $this->images ) + 1;
+
+		return $aFileInfo;
+	}
+
+	/**
+	 * @param string $sFile
+	 * @param int $nPosX
+	 * @param int $nPosY
+	 * @param int $nWidth
+	 * @param int $nHeight
+	 * @param string $sType
+	 * @param string $sLink
+	 * @return $this
+	 */
+	public function image( string $sFile, $nPosX = null, $nPosY = null, $nWidth = 0, $nHeight = 0, $sType = '', $sLink = '' ) {
+		// Put an image on the page
+		if ( !$this->isImageFileAdded( $sFile ) ) {
+			$this->images[$sFile] = $this->getImageInfo( $sFile, $sType );
+		}
+
+		$aFileInfo = $this->images[$sFile];
+
+		// Automatic width and height calculation if needed. Put image at 96 dpi
+		if ( $nWidth == 0 && $nHeight == 0 ) {
+			$nWidth = -96;
+			$nHeight = -96;
+		}
+
+		if ( $nWidth < 0 ) {
+			$nWidth = -$aFileInfo['w'] * 72 / $nWidth / $this->nScaleFactor;
+		}
+
+		if ( $nHeight < 0 ) {
+			$nHeight = -$aFileInfo['h'] * 72 / $nHeight / $this->nScaleFactor;
+		}
+
+		if ( $nWidth == 0 ) {
+			$nWidth = $nHeight * $aFileInfo['w'] / $aFileInfo['h'];
+		}
+
+		if ( $nHeight == 0 ) {
+			$nHeight = $nWidth * $aFileInfo['h'] / $aFileInfo['w'];
+		}
 
 		// Flowing mode
-		if($y===null) {
-			if($this->nPosY+$h>$this->nPageBreakTrigger && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak())
-			{
+		if ( $nPosY === null ) {
+			if ( $this->nPosY+$nHeight>$this->nPageBreakTrigger && !$this->InHeader
+				&& !$this->InFooter && $this->AcceptPageBreak() ) {
 				// Automatic page break
 				$x2 = $this->nPosX;
-				$this->AddPage($this->sCurrentOrientation,$this->nCurrentPageSize);
+				$this->addPage( $this->sCurrentOrientation, $this->nCurrentPageSize );
 				$this->nPosX = $x2;
 			}
-			$y = $this->nPosY;
-			$this->nPosY += $h;
+			$nPosY = $this->nPosY;
+			$this->nPosY += $nHeight;
 		}
 
-		if($x===null)
-			$x = $this->nPosX;
-		$this->_out(sprintf('q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q',$w*$this->nScaleFactor,$h*$this->nScaleFactor,$x*$this->nScaleFactor,($this->h-($y+$h))*$this->nScaleFactor,$info['i']));
-		if($link) {
-			$this->link( $x, $y, $w, $h, $link );
+		if ( $nPosX === null ) {
+			$nPosX = $this->nPosX;
+		}
+
+		$this->_out(
+			sprintf( 'q %.2F 0 0 %.2F %.2F %.2F cm /I%d Do Q',
+				$nWidth * $this->nScaleFactor,
+				$nHeight * $this->nScaleFactor,
+				$nPosX * $this->nScaleFactor,
+				($this->h - ($nPosY + $nHeight ) ) * $this->nScaleFactor,
+				$aFileInfo['index']
+			)
+		);
+
+		if ( !empty( $sLink ) ) {
+			$this->link( $nPosX, $nPosY, $nWidth, $nHeight, $sLink );
 		}
 		return $this;
 	}
@@ -1366,38 +1510,41 @@ class FlexPdf {
 		return $this;
 	}
 
+	/**
+	 * @return int
+	 */
 	public function getY() {
 		return $this->nPosY;
 	}
 
 	/**
-	 * @param int $y
+	 * @param int $nPosY
 	 * @param bool $bResetX
 	 * @return $this
 	 */
-	public function setY( $y, $bResetX = true ) {
+	public function setY( $nPosY, $bResetX = true ) {
 		// Set y position and reset x
 		if ( $bResetX ) {
 			$this->nPosX = $this->nMarginLeft;
 		}
-		if ( $y>= 0 ) {
-			$this->nPosY = $y;
+		if ( $nPosY >= 0 ) {
+			$this->nPosY = $nPosY;
 		}
 		else {
-			$this->nPosY = $this->h + $y;
+			$this->nPosY = $this->h + $nPosY;
 		}
 		return $this;
 	}
 
 	/**
-	 * @param int $x
-	 * @param int $y
+	 * @param int $nPosX
+	 * @param int $nPosY
 	 * @return $this
 	 */
-	public function setXY( $x, $y ) {
+	public function setXY( $nPosX, $nPosY ) {
 		return $this
-			->setY( $y )
-			->setX( $x );
+			->setY( $nPosY )
+			->setX( $nPosX );
 	}
 
 	/**
