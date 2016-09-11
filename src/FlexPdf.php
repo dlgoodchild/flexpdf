@@ -347,71 +347,61 @@ class FlexPdf {
 	 * @return $this
 	 */
 	public function setCompression( bool $bCompress ) {
-		if ( function_exists( 'gzcompress' ) ) {
-			$this->bCompress = $bCompress;
-		}
-		else {
-			$this->bCompress = false;
-		}
+		$this->bCompress = ( function_exists( 'gzcompress' )? $bCompress: false );
 		return $this;
 	}
 
 	/**
-	 * @param string $title
-	 * @param bool $isUTF8
+	 * @param string $sTitle
+	 * @param bool $bUtf8
 	 * @return $this
 	 */
-	public function setTitle( string $title, $isUTF8 = false ) {
-		if ( $isUTF8 ) {
-			$title = $this->_UTF8toUTF16( $title );
-		}
-		$this->title = $title;
+	public function setTitle( string $sTitle, $bUtf8 = false ) {
+		$this->title = ( $bUtf8? $this->_UTF8toUTF16( $sTitle ): $sTitle );
 		return $this;
 	}
 
 	/**
-	 * @param string $subject
-	 * @param bool $isUTF8
+	 * @param string $sSubject
+	 * @param bool $bUtf8
 	 * @return $this
 	 */
-	public function setSubject( string $subject, $isUTF8 = false ) {
-		if ( $isUTF8 ) {
-			$subject = $this->_UTF8toUTF16( $subject );
-		}
-		$this->subject = $subject;
+	public function setSubject( string $sSubject, $bUtf8 = false ) {
+		$this->subject = ( $bUtf8? $this->_UTF8toUTF16( $sSubject ): $sSubject );
 		return $this;
 	}
 
 	/**
-	 * @param string $author
-	 * @param bool $isUTF8
+	 * @param string $sAuthor
+	 * @param bool $bUtf8
 	 * @return $this
 	 */
-	public function setAuthor( string $author, bool $isUTF8 = false ) {
-		if ( $isUTF8 ) {
-			$author = $this->_UTF8toUTF16( $author );
-		}
-		$this->author = $author;
+	public function setAuthor( string $sAuthor, bool $bUtf8 = false ) {
+		$this->author = ( $bUtf8? $this->_UTF8toUTF16( $sAuthor ): $sAuthor );
 		return $this;
 	}
 
-	function setKeywords( string $keywords, bool $isUTF8=false) {
-		if ( $isUTF8 ) {
-			$keywords = $this->_UTF8toUTF16( $keywords );
-		}
-		$this->keywords = $keywords;
+	/**
+	 * @param string $sKeywords
+	 * @param bool $bUtf8
+	 * @return $this
+	 */
+	function setKeywords( string $sKeywords, bool $bUtf8 = false ) {
+		$this->keywords = ( $bUtf8? $this->_UTF8toUTF16( $sKeywords ): $sKeywords );
 		return $this;
 	}
 
-	function setCreator( string $creator, bool $isUTF8=false) {
-		if ( $isUTF8 ) {
-			$creator = $this->_UTF8toUTF16( $creator );
-		}
-		$this->creator = $creator;
+	/**
+	 * @param string $sCreator
+	 * @param bool $bUtf8
+	 * @return $this
+	 */
+	function setCreator( string $sCreator, bool $bUtf8 = false ) {
+		$this->creator = ( $bUtf8? $this->_UTF8toUTF16( $sCreator ): $sCreator );
 		return $this;
 	}
 
-	function aliasNbPages( string $alias='{nb}' ) {
+	function aliasNbPages( string $alias = '{nb}' ) {
 		// Define an alias for total number of pages
 		$this->AliasNbPages = $alias;
 		return $this;
@@ -747,7 +737,7 @@ class FlexPdf {
 					'StemV'=>round($ttf->stemV),
 					'MissingWidth'=>round($ttf->defaultWidth)
 				);
-				
+
 				$up = round($ttf->underlinePosition);
 				$ut = round($ttf->underlineThickness);
 				$originalsize = $ttfstat['size']+0;
