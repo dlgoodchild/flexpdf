@@ -255,13 +255,10 @@ class FlexPdf {
 		$this->LineWidth = ( .567 / $this->nScaleFactor );
 
 		// Automatic page break
-		$this->setAutoPageBreak( true, 2*$margin );
-
-		// Default display mode
-		$this->SetDisplayMode( 'default' );
-
-		// Enable compression
-		$this->setCompression( true );
+		$this
+			->setAutoPageBreak( true, 2*$margin )
+			->setDisplayMode( 'default' )
+			->setCompression( true );
 
 		// Set default PDF version number
 		$this->PDFVersion = '1.3';
@@ -271,9 +268,9 @@ class FlexPdf {
 	 * @param $left
 	 * @param $top
 	 * @param null $right
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setMargins( $left, $top, $right = null ) {
+	public function setMargins( $left, $top, $right = null ): FlexPdf {
 		$this->nMarginLeft = $left;
 		$this->nMarginTop = $top;
 		if ( $right === null ) {
@@ -285,9 +282,9 @@ class FlexPdf {
 
 	/**
 	 * @param $margin
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setLeftMargin( $margin ) {
+	public function setLeftMargin( $margin ): FlexPdf {
 		$this->nMarginLeft = $margin;
 		if ( $this->nPageNumber > 0 && $this->nPosX < $margin ) {
 			$this->nPosX = $margin;
@@ -297,18 +294,18 @@ class FlexPdf {
 
 	/**
 	 * @param $margin
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setTopMargin( $margin ) {
+	public function setTopMargin( $margin ): FlexPdf {
 		$this->nMarginTop = $margin;
 		return $this;
 	}
 
 	/**
 	 * @param $margin
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setRightMargin( $margin ) {
+	public function setRightMargin( $margin ): FlexPdf {
 		$this->nMarginRight = $margin;
 		return $this;
 	}
@@ -316,16 +313,21 @@ class FlexPdf {
 	/**
 	 * @param $auto
 	 * @param int $margin
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setAutoPageBreak( $auto, $margin = 0 ) {
+	public function setAutoPageBreak( $auto, $margin = 0 ): FlexPdf {
 		$this->bAutoPageBreak = $auto;
 		$this->bMarginPageBreak = $margin;
 		$this->nPageBreakTrigger = ( $this->h - $margin );
 		return $this;
 	}
 
-	function setDisplayMode( $zoom, $layout = 'default' ) {
+	/**
+	 * @param $zoom
+	 * @param string $sLayout
+	 * @return FlexPdf
+	 */
+	function setDisplayMode( $zoom, string $sLayout = 'default' ): FlexPdf {
 		if ( $zoom == 'fullpage' || $zoom == 'fullwidth' || $zoom == 'real' || $zoom == 'default' || !is_string( $zoom ) ) {
 			$this->ZoomMode = $zoom;
 		}
@@ -333,20 +335,20 @@ class FlexPdf {
 			$this->error( 'Incorrect zoom display mode: ' . $zoom );
 		}
 
-		if ( $layout=='single' || $layout=='continuous' || $layout=='two' || $layout=='default' ) {
-			$this->LayoutMode = $layout;
+		if ( $sLayout=='single' || $sLayout=='continuous' || $sLayout=='two' || $sLayout=='default' ) {
+			$this->LayoutMode = $sLayout;
 		}
 		else {
-			$this->error( 'Incorrect layout display mode: '.$layout );
+			$this->error( 'Incorrect layout display mode: '.$sLayout );
 		}
 		return $this;
 	}
 
 	/**
 	 * @param bool $bCompress
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setCompression( bool $bCompress ) {
+	public function setCompression( bool $bCompress ): FlexPdf {
 		$this->bCompress = ( function_exists( 'gzcompress' )? $bCompress: false );
 		return $this;
 	}
@@ -354,9 +356,9 @@ class FlexPdf {
 	/**
 	 * @param string $sTitle
 	 * @param bool $bUtf8
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setTitle( string $sTitle, $bUtf8 = false ) {
+	public function setTitle( string $sTitle, bool $bUtf8 = false ): FlexPdf {
 		$this->title = ( $bUtf8? $this->_UTF8toUTF16( $sTitle ): $sTitle );
 		return $this;
 	}
@@ -364,9 +366,9 @@ class FlexPdf {
 	/**
 	 * @param string $sSubject
 	 * @param bool $bUtf8
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setSubject( string $sSubject, $bUtf8 = false ) {
+	public function setSubject( string $sSubject, bool $bUtf8 = false ): FlexPdf {
 		$this->subject = ( $bUtf8? $this->_UTF8toUTF16( $sSubject ): $sSubject );
 		return $this;
 	}
@@ -374,9 +376,9 @@ class FlexPdf {
 	/**
 	 * @param string $sAuthor
 	 * @param bool $bUtf8
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function setAuthor( string $sAuthor, bool $bUtf8 = false ) {
+	public function setAuthor( string $sAuthor, bool $bUtf8 = false ): FlexPdf {
 		$this->author = ( $bUtf8? $this->_UTF8toUTF16( $sAuthor ): $sAuthor );
 		return $this;
 	}
@@ -384,9 +386,9 @@ class FlexPdf {
 	/**
 	 * @param string $sKeywords
 	 * @param bool $bUtf8
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	function setKeywords( string $sKeywords, bool $bUtf8 = false ) {
+	function setKeywords( string $sKeywords, bool $bUtf8 = false ): FlexPdf {
 		$this->keywords = ( $bUtf8? $this->_UTF8toUTF16( $sKeywords ): $sKeywords );
 		return $this;
 	}
@@ -394,9 +396,9 @@ class FlexPdf {
 	/**
 	 * @param string $sCreator
 	 * @param bool $bUtf8
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	function setCreator( string $sCreator, bool $bUtf8 = false ) {
+	function setCreator( string $sCreator, bool $bUtf8 = false ): FlexPdf {
 		$this->creator = ( $bUtf8? $this->_UTF8toUTF16( $sCreator ): $sCreator );
 		return $this;
 	}
@@ -438,7 +440,7 @@ class FlexPdf {
 
 		// Page footer
 		$this->InFooter = true;
-		$this->Footer();
+		// todo call footer callback
 		$this->InFooter = false;
 
 		// Close page
@@ -467,7 +469,7 @@ class FlexPdf {
 		if ( $this->nPageNumber > 0 ) {
 			// Page footer
 			$this->InFooter = true;
-			$this->Footer();
+			// todo call footer callback
 			$this->InFooter = false;
 
 			// Close page
@@ -504,7 +506,7 @@ class FlexPdf {
 
 		// Page header
 		$this->InHeader = true;
-		$this->Header();
+		// todo: call header callback
 		$this->InHeader = false;
 
 		// Restore line width
@@ -521,7 +523,7 @@ class FlexPdf {
 		// Restore colors
 		if ( $this->DrawColor != $dc ) {
 			$this->DrawColor = $dc;
-			$this->_out($dc);
+			$this->_out( $dc );
 		}
 
 		if ( $this->FillColor != $fc ) {
@@ -535,32 +537,34 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function Header() {
-		// To be implemented in your own inherited class
-	}
-
-	public function Footer() {
-		// To be implemented in your own inherited class
-	}
-
-	public function pageNo() {
+	public function pageNo(): int {
 		// Get current page number
 		return $this->nPageNumber;
 	}
 
-	public function setDrawColor($r, $g=null, $b=null) {
+	/**
+	 * @param int $nRed
+	 * @param int $nGreen
+	 * @param int $nBlue
+	 * @return FlexPdf
+	 */
+	public function setDrawColor( $nRed, $nGreen = null, $nBlue = null ): FlexPdf {
 		// Set color for all stroking operations
-		if(($r==0 && $g==0 && $b==0) || $g===null)
-			$this->DrawColor = sprintf('%.3F G',$r/255);
-		else
-			$this->DrawColor = sprintf('%.3F %.3F %.3F RG',$r/255,$g/255,$b/255);
-		if($this->nPageNumber>0)
-			$this->_out($this->DrawColor);
+		if ( ( $nRed == 0 && $nGreen == 0 && $nBlue == 0 ) || $nGreen === null) {
+			$this->DrawColor = sprintf( '%.3F G', $nRed / 255 );
+		}
+		else {
+			$this->DrawColor = sprintf( '%.3F %.3F %.3F RG', $nRed / 255, $nGreen / 255, $nBlue / 255 );
+		}
+
+		if ( $this->nPageNumber > 0 ) {
+			$this->_out( $this->DrawColor );
+		}
 
 		return $this;
 	}
 
-	public function setFillColor($r, $g=null, $b=null) {
+	public function setFillColor($r, $g=null, $b=null): FlexPdf {
 		// Set color for all filling operations
 		if(($r==0 && $g==0 && $b==0) || $g===null)
 			$this->FillColor = sprintf('%.3F g',$r/255);
@@ -572,7 +576,7 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function setTextColor($r, $g=null, $b=null) {
+	public function setTextColor($r, $g=null, $b=null): FlexPdf {
 		// Set color for text
 		if(($r==0 && $g==0 && $b==0) || $g===null)
 			$this->TextColor = sprintf('%.3F g',$r/255);
@@ -586,7 +590,7 @@ class FlexPdf {
 	 * @param string $s
 	 * @return float
 	 */
-	public function getStringWidth( string $s ) {
+	public function getStringWidth( string $s ): float {
 		// Get width of a string in the current font
 		$s = (string)$s;
 
@@ -626,7 +630,7 @@ class FlexPdf {
 	 * @param int $nWidth
 	 * @return $this
 	 */
-	public function setLineWidth( $nWidth ) {
+	public function setLineWidth( int $nWidth ): FlexPdf {
 		// Set line width
 		$this->LineWidth = $nWidth;
 		if ( $this->nPageNumber > 0 ) {
@@ -643,7 +647,7 @@ class FlexPdf {
 	 * @param int $y2
 	 * @return $this
 	 */
-	public function line( int $x1, int $y1, int $x2, int $y2 ) {
+	public function line( int $x1, int $y1, int $x2, int $y2 ): FlexPdf {
 		$this->_out(
 			sprintf( '%.2F %.2F m %.2F %.2F l S',
 				$x1 * $this->nScaleFactor,
@@ -663,7 +667,7 @@ class FlexPdf {
 	 * @param string $style
 	 * @return $this
 	 */
-	public function rect( int $x, int $y, int $w, int $h, string $style = '' ) {
+	public function rect( int $x, int $y, int $w, int $h, string $style = '' ): FlexPdf {
 		if ( $style == 'F' ) {
 			$op = 'f';
 		}
@@ -685,7 +689,7 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function addFont( string $family, string $style = '', string $file = '', $uni = false ) {
+	public function addFont( string $family, string $style = '', string $file = '', $uni = false ): FlexPdf {
 		// Add a TrueType, OpenType or Type1 font
 		$family = strtolower( $family );
 		$style = strtoupper( $style );
@@ -781,8 +785,7 @@ class FlexPdf {
 		else {
 			$info = $this->_loadfont($file);
 			$info['i'] = count($this->fonts)+1;
-			if(!empty($info['diff']))
-			{
+			if ( !empty( $info['diff'] ) ) {
 				// Search existing encodings
 				$n = array_search($info['diff'],$this->diffs);
 				if(!$n)
@@ -792,20 +795,22 @@ class FlexPdf {
 				}
 				$info['diffn'] = $n;
 			}
-			if(!empty($info['file']))
-			{
+
+			if ( !empty( $info['file'] ) ) {
 				// Embedded font
-				if($info['type']=='TrueType')
-					$this->FontFiles[$info['file']] = array('length1'=>$info['originalsize']);
-				else
-					$this->FontFiles[$info['file']] = array('length1'=>$info['size1'], 'length2'=>$info['size2']);
+				if($info['type']=='TrueType') {
+					$this->FontFiles[$info['file']] = array( 'length1' => $info['originalsize'] );
+				}
+				else {
+					$this->FontFiles[$info['file']] = array( 'length1' => $info['size1'], 'length2' => $info['size2'] );
+				}
 			}
 			$this->fonts[$fontkey] = $info;
 		}
 		return $this;
 	}
 
-	public function setFont( string $family, string $style='', int $size = 0 ) {
+	public function setFont( string $family, string $style='', int $size = 0 ): FlexPdf {
 		// Select a font; size given in points
 		if($family=='') {
 			$family = $this->FontFamily;
@@ -822,20 +827,27 @@ class FlexPdf {
 		else {
 			$this->underline = false;
 		}
-		if($style=='IB')
+
+		if ( $style == 'IB' ) {
 			$style = 'BI';
-		if($size==0)
+		}
+
+		if ( $size == 0 ) {
 			$size = $this->FontSizePt;
+		}
 		// Test if font is already selected
-		if($this->FontFamily==$family && $this->FontStyle==$style && $this->FontSizePt==$size)
-			return;
+		if ( $this->FontFamily == $family && $this->FontStyle == $style && $this->FontSizePt == $size ) {
+			return $this;
+		}
+
 		// Test if font is already loaded
 		$fontkey = $family.$style;
-		if(!isset($this->fonts[$fontkey])) {
+		if ( !isset( $this->fonts[$fontkey] ) ) {
 			// Test if one of the core fonts
 			if($family=='arial') {
 				$family = 'helvetica';
 			}
+
 			if (in_array($family,$this->CoreFonts)) {
 				if($family=='symbol' || $family=='zapfdingbats') {
 					$style = '';
@@ -874,7 +886,7 @@ class FlexPdf {
 	 * @param int $size
 	 * @return $this
 	 */
-	public function setFontSize( int $size ) {
+	public function setFontSize( int $size ): FlexPdf{
 		if ( $this->FontSizePt == $size ) {
 			return $this;
 		}
