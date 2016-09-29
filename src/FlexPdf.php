@@ -714,9 +714,11 @@ class FlexPdf {
 			else {
 				$ttffilename = $this->_getfontpath().'unifont/'.$file;
 			}
+
 			$unifilename = $this->_getfontpath().'unifont/'.strtolower(substr($file ,0,(strpos($file ,'.'))));
 			$name = '';
 			$originalsize = 0;
+
 			$ttfstat = stat( $ttffilename );
 			if ( file_exists( $unifilename.'.mtx.php' ) ) {
 				include( $unifilename.'.mtx.php' );
@@ -753,11 +755,12 @@ class FlexPdf {
 				$s.='$desc='.var_export($desc,true).";\n";
 				$s.='$up='.$up.";\n";
 				$s.='$ut='.$ut.";\n";
-				$s.='$ttffile=\''.$ttffile."';\n";
+				$s.='$ttffile=\''.$ttffile."';\n"; // todo: apply a relative path
 				$s.='$originalsize='.$originalsize.";\n";
 				$s.='$fontkey=\''.$fontkey."';\n";
 				$s.="?>";
-				if (is_writable(dirname($this->_getfontpath().'unifont/'.'x'))) {
+
+				if ( is_writable( dirname( $this->_getfontpath().'unifont/'.'x' ) ) ) {
 					$fh = fopen($unifilename.'.mtx.php',"w");
 					fwrite($fh,$s,strlen($s));
 					fclose($fh);
