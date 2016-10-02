@@ -775,10 +775,12 @@ class FlexPdf {
 				$cw = @file_get_contents($unifilename.'.cw.dat');
 			}
 			$i = count($this->fonts)+1;
-			if(!empty($this->AliasNbPages))
-				$sbarr = range(0,57);
-			else
-				$sbarr = range(0,32);
+			if(!empty($this->AliasNbPages)) {
+				$sbarr = range( 0, 57 );
+			}
+			else {
+				$sbarr = range( 0, 32 );
+			}
 			$this->fonts[$fontkey] = array('i'=>$i, 'type'=>$type, 'name'=>$name, 'desc'=>$desc, 'up'=>$up, 'ut'=>$ut, 'cw'=>$cw, 'ttffile'=>$ttffile, 'fontkey'=>$fontkey, 'subset'=>$sbarr, 'unifilename'=>$unifilename);
 
 			$this->FontFiles[$fontkey]=array('length1'=>$originalsize, 'type'=>"TTF", 'ttffile'=>$ttffile);
@@ -786,14 +788,13 @@ class FlexPdf {
 			unset($cw);
 		}
 		else {
-			$info = $this->_loadfont($file);
+			$info = $this->_loadfont( $file );
 			$info['i'] = count($this->fonts)+1;
 			if ( !empty( $info['diff'] ) ) {
 				// Search existing encodings
-				$n = array_search($info['diff'],$this->diffs);
-				if(!$n)
-				{
-					$n = count($this->diffs)+1;
+				$n = array_search( $info['diff'], $this->diffs );
+				if ( !$n ) {
+					$n = count( $this->diffs ) + 1;
 					$this->diffs[$n] = $info['diff'];
 				}
 				$info['diffn'] = $n;
@@ -801,7 +802,7 @@ class FlexPdf {
 
 			if ( !empty( $info['file'] ) ) {
 				// Embedded font
-				if($info['type']=='TrueType') {
+				if ( $info['type']=='TrueType') {
 					$this->FontFiles[$info['file']] = array( 'length1' => $info['originalsize'] );
 				}
 				else {
@@ -847,7 +848,7 @@ class FlexPdf {
 		$fontkey = $family.$style;
 		if ( !isset( $this->fonts[$fontkey] ) ) {
 			// Test if one of the core fonts
-			if($family=='arial') {
+			if ( $family == 'arial' ) {
 				$family = 'helvetica';
 			}
 
@@ -857,11 +858,11 @@ class FlexPdf {
 				}
 				$fontkey = $family.$style;
 				if(!isset($this->fonts[$fontkey])) {
-					$this->AddFont( $family, $style );
+					$this->addFont( $family, $style );
 				}
 			}
 			else {
-				$this->Error( 'Undefined font: ' . $family . ' ' . $style );
+				$this->error( 'Undefined font: ' . $family . ' ' . $style );
 			}
 		}
 		// Select it
@@ -887,9 +888,9 @@ class FlexPdf {
 
 	/**
 	 * @param int $size
-	 * @return $this
+	 * @return FlexPDF
 	 */
-	public function setFontSize( int $size ): FlexPdf{
+	public function setFontSize( int $size ): FlexPdf {
 		if ( $this->FontSizePt == $size ) {
 			return $this;
 		}
@@ -903,22 +904,31 @@ class FlexPdf {
 	}
 
 	/**
+	 * Create a new internal link
 	 * @return int
 	 */
-	public function addLink() {
-		// Create a new internal link
-		$n = count( $this->links )+1;
-		$this->links[$n] = array( 0, 0 );
-		return $n;
+	public function addLink(): int {
+		$nLinkIndex = count( $this->links ) + 1;
+		$this->links[$nLinkIndex] = array( 0, 0 );
+		return $nLinkIndex;
 	}
 
-	public function setLink($link, $y=0, $page=-1) {
+	/**
+	 * @param int $nLinkIndex
+	 * @param int $nPosY
+	 * @param int $nPage
+	 * @return FlexPdf
+	 */
+	public function setLink( $nLinkIndex, $nPosY = 0, $nPage = -1 ): FlexPdf {
 		// Set destination of internal link
-		if($y==-1)
-			$y = $this->nPosY;
-		if($page==-1)
-			$page = $this->nPageNumber;
-		$this->links[$link] = array($page, $y);
+		if ( $nPosY == -1 ) {
+			$nPosY = $this->nPosY;
+		}
+
+		if ( $nPage == -1 ) {
+			$nPage = $this->nPageNumber;
+		}
+		$this->links[$nLinkIndex] = array( $nPage, $nPosY );
 
 		return $this;
 	}
@@ -1715,12 +1725,19 @@ class FlexPdf {
 	/**
 	 * @param string $sFont
 	 * @return array
+	 * @throws \Exception
 	 */
 	private function _loadfont( string $sFont ) {
-		// Load a font definition file from the font directory
-		include( $this->fontpath.$sFont );
+		$sFontFile = rtrim( $this->fontpath, '/' ).'/'.$sFont;
+		if ( !is_file( $sFontFile ) ) {
+			throw new \Exception( sprintf( 'Font file "%s" does not exist', $sFontFile ) );
+		}
+
+		include( $sFontFile );
 
 		$a = get_defined_vars();
+		//var_dump($a);
+		//die();
 		if ( !isset( $a['name'] ) ) {
 			$this->error( 'Could not include font definition file' );
 		}
