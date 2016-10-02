@@ -714,9 +714,11 @@ class FlexPdf {
 			else {
 				$ttffilename = $this->_getfontpath().'unifont/'.$file;
 			}
+
 			$unifilename = $this->_getfontpath().'unifont/'.strtolower(substr($file ,0,(strpos($file ,'.'))));
 			$name = '';
 			$originalsize = 0;
+
 			$ttfstat = stat( $ttffilename );
 			if ( file_exists( $unifilename.'.mtx.php' ) ) {
 				include( $unifilename.'.mtx.php' );
@@ -753,11 +755,12 @@ class FlexPdf {
 				$s.='$desc='.var_export($desc,true).";\n";
 				$s.='$up='.$up.";\n";
 				$s.='$ut='.$ut.";\n";
-				$s.='$ttffile=\''.$ttffile."';\n";
+				$s.='$ttffile=\''.$ttffile."';\n"; // todo: apply a relative path
 				$s.='$originalsize='.$originalsize.";\n";
 				$s.='$fontkey=\''.$fontkey."';\n";
 				$s.="?>";
-				if (is_writable(dirname($this->_getfontpath().'unifont/'.'x'))) {
+
+				if ( is_writable( dirname( $this->_getfontpath().'unifont/'.'x' ) ) ) {
 					$fh = fopen($unifilename.'.mtx.php',"w");
 					fwrite($fh,$s,strlen($s));
 					fclose($fh);
@@ -772,10 +775,12 @@ class FlexPdf {
 				$cw = @file_get_contents($unifilename.'.cw.dat');
 			}
 			$i = count($this->fonts)+1;
-			if(!empty($this->AliasNbPages))
-				$sbarr = range(0,57);
-			else
-				$sbarr = range(0,32);
+			if(!empty($this->AliasNbPages)) {
+				$sbarr = range( 0, 57 );
+			}
+			else {
+				$sbarr = range( 0, 32 );
+			}
 			$this->fonts[$fontkey] = array('i'=>$i, 'type'=>$type, 'name'=>$name, 'desc'=>$desc, 'up'=>$up, 'ut'=>$ut, 'cw'=>$cw, 'ttffile'=>$ttffile, 'fontkey'=>$fontkey, 'subset'=>$sbarr, 'unifilename'=>$unifilename);
 
 			$this->FontFiles[$fontkey]=array('length1'=>$originalsize, 'type'=>"TTF", 'ttffile'=>$ttffile);
@@ -783,14 +788,13 @@ class FlexPdf {
 			unset($cw);
 		}
 		else {
-			$info = $this->_loadfont($file);
+			$info = $this->_loadfont( $file );
 			$info['i'] = count($this->fonts)+1;
 			if ( !empty( $info['diff'] ) ) {
 				// Search existing encodings
-				$n = array_search($info['diff'],$this->diffs);
-				if(!$n)
-				{
-					$n = count($this->diffs)+1;
+				$n = array_search( $info['diff'], $this->diffs );
+				if ( !$n ) {
+					$n = count( $this->diffs ) + 1;
 					$this->diffs[$n] = $info['diff'];
 				}
 				$info['diffn'] = $n;
@@ -798,7 +802,7 @@ class FlexPdf {
 
 			if ( !empty( $info['file'] ) ) {
 				// Embedded font
-				if($info['type']=='TrueType') {
+				if ( $info['type']=='TrueType') {
 					$this->FontFiles[$info['file']] = array( 'length1' => $info['originalsize'] );
 				}
 				else {
@@ -844,7 +848,7 @@ class FlexPdf {
 		$fontkey = $family.$style;
 		if ( !isset( $this->fonts[$fontkey] ) ) {
 			// Test if one of the core fonts
-			if($family=='arial') {
+			if ( $family == 'arial' ) {
 				$family = 'helvetica';
 			}
 
@@ -854,26 +858,21 @@ class FlexPdf {
 				}
 				$fontkey = $family.$style;
 				if(!isset($this->fonts[$fontkey])) {
-					$this->AddFont( $family, $style );
+					$this->addFont( $family, $style );
 				}
 			}
 			else {
-				$this->Error( 'Undefined font: ' . $family . ' ' . $style );
+				$this->error( 'Undefined font: ' . $family . ' ' . $style );
 			}
 		}
+
 		// Select it
 		$this->FontFamily = $family;
 		$this->FontStyle = $style;
 		$this->FontSizePt = $size;
 		$this->FontSize = $size/$this->nScaleFactor;
 		$this->CurrentFont = &$this->fonts[$fontkey];
-
-		if ( $this->fonts[$fontkey]['type']=='TTF') {
-			$this->unifontSubset = true;
-		}
-		else {
-			$this->unifontSubset = false;
-		}
+		$this->unifontSubset = ( $this->fonts[$fontkey]['type']=='TTF');
 
 		if ( $this->nPageNumber > 0 ) {
 			$this->_out( sprintf( 'BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt ) );
@@ -884,9 +883,9 @@ class FlexPdf {
 
 	/**
 	 * @param int $size
-	 * @return $this
+	 * @return FlexPDF
 	 */
-	public function setFontSize( int $size ): FlexPdf{
+	public function setFontSize( int $size ): FlexPdf {
 		if ( $this->FontSizePt == $size ) {
 			return $this;
 		}
@@ -900,47 +899,85 @@ class FlexPdf {
 	}
 
 	/**
+	 * Create a new internal link
 	 * @return int
 	 */
-	public function addLink() {
-		// Create a new internal link
-		$n = count( $this->links )+1;
-		$this->links[$n] = array( 0, 0 );
-		return $n;
+	public function addLink(): int {
+		$nLinkIndex = count( $this->links ) + 1;
+		$this->links[$nLinkIndex] = array( 0, 0 );
+		return $nLinkIndex;
 	}
 
-	public function setLink($link, $y=0, $page=-1) {
+	/**
+	 * @param int $nLinkIndex
+	 * @param int $nPosY
+	 * @param int $nPage
+	 * @return FlexPdf
+	 */
+	public function setLink( $nLinkIndex, $nPosY = 0, $nPage = -1 ): FlexPdf {
 		// Set destination of internal link
-		if($y==-1)
-			$y = $this->nPosY;
-		if($page==-1)
-			$page = $this->nPageNumber;
-		$this->links[$link] = array($page, $y);
-
-		return $this;
-	}
-
-	public function link( int $x, int $y, int $w, int $h, $link ) {
-		$this->PageLinks[$this->nPageNumber][] = array($x*$this->nScaleFactor, $this->hPt-$y*$this->nScaleFactor, $w*$this->nScaleFactor, $h*$this->nScaleFactor, $link);
-		return $this;
-	}
-
-	public function text($x, $y, $txt) {
-		// Output a string
-		if ($this->unifontSubset)
-		{
-			$txt2 = '('.$this->_escape($this->UTF8ToUTF16BE($txt, false)).')';
-			foreach($this->UTF8StringToArray($txt) as $uni)
-				$this->CurrentFont['subset'][$uni] = $uni;
+		if ( $nPosY == -1 ) {
+			$nPosY = $this->nPosY;
 		}
-		else
-			$txt2 = '('.$this->_escape($txt).')';
-		$s = sprintf('BT %.2F %.2F Td %s Tj ET',$x*$this->nScaleFactor,($this->h-$y)*$this->nScaleFactor,$txt2);
-		if($this->underline && $txt!='')
-			$s .= ' '.$this->_dounderline($x,$y,$txt);
-		if($this->ColorFlag)
-			$s = 'q '.$this->TextColor.' '.$s.' Q';
-		$this->_out($s);
+
+		if ( $nPage == -1 ) {
+			$nPage = $this->nPageNumber;
+		}
+		$this->links[$nLinkIndex] = array( $nPage, $nPosY );
+
+		return $this;
+	}
+
+	/**
+	 * @param int $x
+	 * @param int $y
+	 * @param int $w
+	 * @param int $h
+	 * @param $link
+	 * @return FlexPdf
+	 */
+	public function link( int $x, int $y, int $w, int $h, $link ): FlexPdf {
+		$this->PageLinks[$this->nPageNumber][] = array(
+			$x * $this->nScaleFactor,
+			$this->hPt - $y * $this->nScaleFactor,
+			$w * $this->nScaleFactor,
+			$h * $this->nScaleFactor,
+			$link
+		);
+		return $this;
+	}
+
+	/**
+	 * @param $x
+	 * @param $y
+	 * @param $txt
+	 * @return FlexPdf
+	 */
+	public function text( $x, $y, $txt ): FlexPdf {
+		// Output a string
+		if ( $this->unifontSubset ) {
+			$txt2 = '('.$this->_escape( $this->UTF8ToUTF16BE( $txt, false ) ).')';
+			foreach ( $this->UTF8StringToArray( $txt ) as $uni ) {
+				$this->CurrentFont['subset'][$uni] = $uni;
+			}
+		}
+		else {
+			$txt2 = '(' . $this->_escape( $txt ) . ')';
+		}
+		$s = sprintf(
+			'BT %.2F %.2F Td %s Tj ET',
+			$x * $this->nScaleFactor,
+			($this->h-$y) * $this->nScaleFactor,
+			$txt2
+		);
+
+		if ( $this->underline && $txt != '' ) {
+			$s .= ' ' . $this->_dounderline( $x, $y, $txt );
+		}
+		if ( $this->ColorFlag ) {
+			$s = 'q ' . $this->TextColor . ' ' . $s . ' Q';
+		}
+		$this->_out( $s );
 		return $this;
 	}
 
@@ -1128,72 +1165,59 @@ class FlexPdf {
 			else {
 				$c=$s[$i];
 			}
-			if($c=="\n")
-			{
+			if ( $c == "\n" ) {
 				// Explicit line break
-				if($this->ws>0)
-				{
+				if($this->ws>0) {
 					$this->ws = 0;
 					$this->_out('0 Tw');
 				}
-				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-				}
-				else {
-					$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-				}
+
+				$this->cell( $w, $h, $this->subString( $s, $j, $i-$j ), $b, 2, $align, $fill );
+
 				$i++;
 				$sep = -1;
 				$j = $i;
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if($border && $nl==2)
+				if($border && $nl==2) {
 					$b = $b2;
+				}
 				continue;
 			}
-			if($c==' ')
-			{
+			if ( $c == ' ' ) {
 				$sep = $i;
 				$ls = $l;
 				$ns++;
 			}
 
-			if ($this->unifontSubset) { $l += $this->GetStringWidth($c); }
-			else { $l += $cw[$c]*$this->FontSize/1000; }
+			if ($this->unifontSubset) {
+				$l += $this->getStringWidth($c);
+			}
+			else {
+				$l += $cw[$c]*$this->FontSize/1000;
+			}
 
-			if($l>$wmax)
-			{
+			if($l>$wmax) {
 				// Automatic line break
-				if($sep==-1)
-				{
-					if($i==$j)
+				if($sep==-1) {
+					if ( $i == $j ) {
 						$i++;
-					if($this->ws>0)
-					{
+					}
+
+					if ( $this->ws > 0 ) {
 						$this->ws = 0;
 						$this->_out('0 Tw');
 					}
-					if ($this->unifontSubset) {
-						$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
-					}
-					else {
-						$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
-					}
+					$this->cell( $w, $h, $this->subString( $s, $j, $i-$j ), $b, 2, $align, $fill );
 				}
-				else
-				{
-					if($align=='J')
-					{
+				else {
+					if($align=='J') {
 						$this->ws = ($ns>1) ? ($wmax-$ls)/($ns-1) : 0;
 						$this->_out(sprintf('%.3F Tw',$this->ws*$this->nScaleFactor));
 					}
-					if ($this->unifontSubset) {
-						$this->Cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),$b,2,$align,$fill);
-					}
-					else {
-						$this->Cell($w,$h,substr($s,$j,$sep-$j),$b,2,$align,$fill);
-					}
+
+					$this->cell( $w, $h, $this->subString( $s, $j, $sep-$j ), $b, 2, $align, $fill );
 					$i = $sep+1;
 				}
 				$sep = -1;
@@ -1201,8 +1225,9 @@ class FlexPdf {
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if($border && $nl==2)
+				if($border && $nl==2) {
 					$b = $b2;
+				}
 			}
 			else {
 				$i++;
@@ -1228,7 +1253,7 @@ class FlexPdf {
 	/**
 	 * @return FlexPdf
 	 */
-	private function writeLineBreak() {
+	private function writeLineBreak(): FlexPdf {
 		return $this->_out( '0 Tw' );
 	}
 
@@ -1343,7 +1368,7 @@ class FlexPdf {
 				$this->cell( $l, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 0, '', false, $sLink );
 			}
 			else {
-				$this->cell($l,$nHeight,substr($s,$j),0,0,'',false,$sLink);
+				$this->cell( $l, $nHeight, substr( $s, $j ), 0, 0, '', false, $sLink );
 			}
 		}
 	}
@@ -1712,12 +1737,19 @@ class FlexPdf {
 	/**
 	 * @param string $sFont
 	 * @return array
+	 * @throws \Exception
 	 */
 	private function _loadfont( string $sFont ) {
-		// Load a font definition file from the font directory
-		include( $this->fontpath.$sFont );
+		$sFontFile = rtrim( $this->fontpath, '/' ).'/'.$sFont;
+		if ( !is_file( $sFontFile ) ) {
+			throw new \Exception( sprintf( 'Font file "%s" does not exist', $sFontFile ) );
+		}
+
+		include( $sFontFile );
 
 		$a = get_defined_vars();
+		//var_dump($a);
+		//die();
 		if ( !isset( $a['name'] ) ) {
 			$this->error( 'Could not include font definition file' );
 		}
@@ -1771,23 +1803,36 @@ class FlexPdf {
 		// Underline text
 		$up = $this->CurrentFont['up'];
 		$ut = $this->CurrentFont['ut'];
-		$w = $this->GetStringWidth($txt)+$this->ws*substr_count($txt,' ');
-		return sprintf('%.2F %.2F %.2F %.2F re f',$x*$this->nScaleFactor,($this->h-($y-$up/1000*$this->FontSize))*$this->nScaleFactor,$w*$this->nScaleFactor,-$ut/1000*$this->FontSizePt);
+		$w = $this->getStringWidth($txt)+$this->ws*substr_count($txt,' ');
+		return sprintf(
+			'%.2F %.2F %.2F %.2F re f',
+			$x*$this->nScaleFactor,
+			($this->h-($y-$up/1000*$this->FontSize))*$this->nScaleFactor,
+			$w*$this->nScaleFactor,
+			-$ut/1000*$this->FontSizePt
+		);
 	}
 
 	private function _parsejpg($file) {
 		// Extract info from a JPEG file
 		$a = getimagesize($file);
-		if(!$a)
-			$this->Error('Missing or incorrect image file: '.$file);
-		if($a[2]!=2)
-			$this->Error('Not a JPEG file: '.$file);
-		if(!isset($a['channels']) || $a['channels']==3)
+		if(!$a) {
+			$this->error( 'Missing or incorrect image file: ' . $file );
+		}
+
+		if($a[2]!=2) {
+			$this->error( 'Not a JPEG file: ' . $file );
+		}
+
+		if(!isset($a['channels']) || $a['channels']==3) {
 			$colspace = 'DeviceRGB';
-		elseif($a['channels']==4)
+		}
+		else if($a['channels']==4) {
 			$colspace = 'DeviceCMYK';
-		else
+		}
+		else {
 			$colspace = 'DeviceGray';
+		}
 		$bpc = isset($a['bits']) ? $a['bits'] : 8;
 		$data = file_get_contents($file);
 		return array('w'=>$a[0], 'h'=>$a[1], 'cs'=>$colspace, 'bpc'=>$bpc, 'f'=>'DCTDecode', 'data'=>$data);
@@ -1796,8 +1841,9 @@ class FlexPdf {
 	private function _parsepng($file) {
 		// Extract info from a PNG file
 		$f = fopen($file,'rb');
-		if(!$f)
-			$this->Error('Can\'t open image file: '.$file);
+		if( !$f ) {
+			$this->error( 'Can\'t open image file: ' . $file );
+		}
 		$info = $this->_parsepngstream($f,$file);
 		fclose($f);
 		return $info;
@@ -1805,8 +1851,9 @@ class FlexPdf {
 
 	private function _parsepngstream($f, $file) {
 		// Check signature
-		if($this->_readstream($f,8)!=chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10))
-			$this->Error('Not a PNG file: '.$file);
+		if($this->_readstream($f,8)!=chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10)) {
+			$this->error( 'Not a PNG file: ' . $file );
+		}
 
 		// Read header chunk
 		$this->_readstream($f,4);
@@ -1950,14 +1997,14 @@ class FlexPdf {
 	private function _parsegif( $file ) {
 		// Extract info from a GIF file (via PNG conversion)
 		if ( !function_exists('imagepng')) {
-			$this->Error( 'GD extension is required for GIF support' );
+			$this->error( 'GD extension is required for GIF support' );
 		}
 		if ( !function_exists('imagecreatefromgif')) {
-			$this->Error( 'GD has no GIF read support' );
+			$this->error( 'GD has no GIF read support' );
 		}
 		$im = imagecreatefromgif($file);
 		if ( !$im ) {
-			$this->Error( 'Missing or incorrect image file: ' . $file );
+			$this->error( 'Missing or incorrect image file: ' . $file );
 		}
 		imageinterlace($im,0);
 		$f = @fopen('php://temp','rb+');
@@ -1990,20 +2037,21 @@ class FlexPdf {
 
 	/**
 	 * Begin a new object within the document.
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _newobj() {
+	private function _newobj(): FlexPdf {
 		$this->nObjectNumber++;
 		$this->aObjectOffsets[$this->nObjectNumber] = strlen( $this->sBuffer );
+
 		$this->_out( $this->nObjectNumber.' 0 obj' );
 		return $this;
 	}
 
 	/**
 	 * @param string $sString
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _putstream( string $sString ) {
+	private function _putstream( string $sString ): FlexPdf {
 		return $this
 			->_out( 'stream' )
 			->_out( $sString )
@@ -2013,9 +2061,9 @@ class FlexPdf {
 	/**
 	 * Adds a line to the document, always appended with a newline
 	 * @param string $sString
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _out( string $sString ) {
+	private function _out( string $sString ): FlexPdf {
 		if ( $this->sDocState == 2 ) {
 			$this->aPages[$this->nPageNumber] .= $sString . "\n";
 		}
@@ -2502,59 +2550,56 @@ class FlexPdf {
 		$this->_out('/W ['.$w.' ]');
 	}
 
-	function _putimages()
-	{
-		foreach(array_keys($this->images) as $file)
-		{
+	function _putimages() {
+		foreach(array_keys($this->images) as $file) {
 			$this->_putimage($this->images[$file]);
 			unset($this->images[$file]['data']);
 			unset($this->images[$file]['smask']);
 		}
 	}
 
-	function _putimage(&$info)
-	{
+	function _putimage(&$info) {
 		$this->_newobj();
 		$info['n'] = $this->nObjectNumber;
 		$this->_out('<</Type /XObject');
 		$this->_out('/Subtype /Image');
 		$this->_out('/Width '.$info['w']);
 		$this->_out('/Height '.$info['h']);
-		if($info['cs']=='Indexed')
-			$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->nObjectNumber+1).' 0 R]');
-		else
-		{
+		if($info['cs']=='Indexed') {
+			$this->_out( '/ColorSpace [/Indexed /DeviceRGB ' . ( strlen( $info['pal'] ) / 3 - 1 ) . ' ' . ( $this->nObjectNumber + 1 ) . ' 0 R]' );
+		}
+		else {
 			$this->_out('/ColorSpace /'.$info['cs']);
 			if($info['cs']=='DeviceCMYK')
 				$this->_out('/Decode [1 0 1 0 1 0 1 0]');
 		}
 		$this->_out('/BitsPerComponent '.$info['bpc']);
-		if(isset($info['f']))
-			$this->_out('/Filter /'.$info['f']);
-		if(isset($info['dp']))
-			$this->_out('/DecodeParms <<'.$info['dp'].'>>');
-		if(isset($info['trns']) && is_array($info['trns']))
-		{
+		if(isset($info['f'])) {
+			$this->_out( '/Filter /' . $info['f'] );
+		}
+		if(isset($info['dp'])) {
+			$this->_out( '/DecodeParms <<' . $info['dp'] . '>>' );
+		}
+		if(isset($info['trns']) && is_array($info['trns'])) {
 			$trns = '';
 			for($i=0;$i<count($info['trns']);$i++)
 				$trns .= $info['trns'][$i].' '.$info['trns'][$i].' ';
 			$this->_out('/Mask ['.$trns.']');
 		}
-		if(isset($info['smask']))
-			$this->_out('/SMask '.($this->nObjectNumber+1).' 0 R');
+		if(isset($info['smask'])) {
+			$this->_out( '/SMask ' . ( $this->nObjectNumber + 1 ) . ' 0 R' );
+		}
 		$this->_out('/Length '.strlen($info['data']).'>>');
 		$this->_putstream($info['data']);
 		$this->_out('endobj');
 		// Soft mask
-		if(isset($info['smask']))
-		{
+		if(isset($info['smask'])) {
 			$dp = '/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns '.$info['w'];
 			$smask = array('w'=>$info['w'], 'h'=>$info['h'], 'cs'=>'DeviceGray', 'bpc'=>8, 'f'=>$info['f'], 'dp'=>$dp, 'data'=>$info['smask']);
 			$this->_putimage($smask);
 		}
 		// Palette
-		if($info['cs']=='Indexed')
-		{
+		if($info['cs']=='Indexed') {
 			$filter = ($this->bCompress) ? '/Filter /FlateDecode ' : '';
 			$pal = ($this->bCompress) ? gzcompress($info['pal']) : $info['pal'];
 			$this->_newobj();
@@ -2564,13 +2609,20 @@ class FlexPdf {
 		}
 	}
 
-	function _putxobjectdict()
-	{
-		foreach($this->images as $image)
-			$this->_out('/I'.$image['i'].' '.$image['n'].' 0 R');
+	/**
+	 * @return FlexPdf
+	 */
+	function _putxobjectdict(): FlexPdf {
+		foreach($this->images as $image) {
+			$this->_out( '/I' . $image['i'] . ' ' . $image['n'] . ' 0 R' );
+		}
+		return $this
 	}
 
-	function _putresourcedict() {
+	/**
+	 * @return FlexPdf
+	 */
+	function _putresourcedict(): FlexPdf {
 		$this->_out('/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]');
 		$this->_out('/Font <<');
 		foreach($this->fonts as $font) {
@@ -2584,7 +2636,10 @@ class FlexPdf {
 		return $this;
 	}
 
-	private function _putresources() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function _putresources(): FlexPdf {
 		$this->_putfonts();
 		$this->_putimages();
 		// Resource dictionary
@@ -2622,18 +2677,19 @@ class FlexPdf {
 	}
 
 	private function _putcatalog() {
-		$this->_out('/Type /Catalog');
-		$this->_out('/Pages 1 0 R');
-		if($this->ZoomMode=='fullpage') {
+		$this->_out( '/Type /Catalog' );
+		$this->_out( '/Pages 1 0 R' );
+
+		if ( $this->ZoomMode == 'fullpage' ) {
 			$this->_out( '/OpenAction [3 0 R /Fit]' );
 		}
-		else if($this->ZoomMode=='fullwidth') {
+		else if ( $this->ZoomMode == 'fullwidth' ) {
 			$this->_out( '/OpenAction [3 0 R /FitH null]' );
 		}
-		else if ( $this->ZoomMode=='real') {
+		else if ( $this->ZoomMode == 'real' ) {
 			$this->_out( '/OpenAction [3 0 R /XYZ null null 1]' );
 		}
-		else if(!is_string($this->ZoomMode)) {
+		else if ( !is_string( $this->ZoomMode ) ) {
 			$this->_out( '/OpenAction [3 0 R /XYZ null null ' . sprintf( '%.2F', $this->ZoomMode / 100 ) . ']' );
 		}
 
@@ -2721,18 +2777,22 @@ class FlexPdf {
 		for ($i = 0; $i < $len; $i++) {
 			$uni = -1;
 			$h = ord($str[$i]);
-			if ( $h <= 0x7F )
+			if ( $h <= 0x7F ) {
 				$uni = $h;
-			elseif ( $h >= 0xC2 ) {
-				if ( ($h <= 0xDF) && ($i < $len -1) )
-					$uni = ($h & 0x1F) << 6 | (ord($str[++$i]) & 0x3F);
-				elseif ( ($h <= 0xEF) && ($i < $len -2) )
-					$uni = ($h & 0x0F) << 12 | (ord($str[++$i]) & 0x3F) << 6
-						| (ord($str[++$i]) & 0x3F);
-				elseif ( ($h <= 0xF4) && ($i < $len -3) )
-					$uni = ($h & 0x0F) << 18 | (ord($str[++$i]) & 0x3F) << 12
-						| (ord($str[++$i]) & 0x3F) << 6
-						| (ord($str[++$i]) & 0x3F);
+			}
+			else if ( $h >= 0xC2 ) {
+				if ( ($h <= 0xDF) && ($i < $len -1) ) {
+					$uni = ( $h & 0x1F ) << 6 | ( ord( $str[++$i] ) & 0x3F );
+				}
+				else if ( ($h <= 0xEF) && ($i < $len -2) ) {
+					$uni = ( $h & 0x0F ) << 12 | ( ord( $str[++$i] ) & 0x3F ) << 6
+						| ( ord( $str[++$i] ) & 0x3F );
+				}
+				else if ( ($h <= 0xF4) && ($i < $len -3) ) {
+					$uni = ( $h & 0x0F ) << 18 | ( ord( $str[++$i] ) & 0x3F ) << 12
+						| ( ord( $str[++$i] ) & 0x3F ) << 6
+						| ( ord( $str[++$i] ) & 0x3F );
+				}
 			}
 			if ($uni >= 0) {
 				$out[] = $uni;

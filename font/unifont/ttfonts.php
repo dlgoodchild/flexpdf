@@ -37,37 +37,37 @@ define("GF_TWOBYTWO",(1 << 7));
 
 class TTFontFile {
 
-var $maxUni;
-var $_pos;
-var $numTables;
-var $searchRange;
-var $entrySelector;
-var $rangeShift;
-var $tables;
-var $otables;
-var $filename;
-var $fh;
-var $hmetrics;
-var $glyphPos;
-var $charToGlyph;
-var $ascent;
-var $descent;
-var $name;
-var $familyName;
-var $styleName;
-var $fullName;
-var $uniqueFontID;
-var $unitsPerEm;
-var $bbox;
-var $capHeight;
-var $stemV;
-var $italicAngle;
-var $flags;
-var $underlinePosition;
-var $underlineThickness;
-var $charWidths;
-var $defaultWidth;
-var $maxStrLenRead;
+	var $maxUni;
+	var $_pos;
+	var $numTables;
+	var $searchRange;
+	var $entrySelector;
+	var $rangeShift;
+	var $tables;
+	var $otables;
+	var $filename;
+	var $fh;
+	var $hmetrics;
+	var $glyphPos;
+	var $charToGlyph;
+	var $ascent;
+	var $descent;
+	var $name;
+	var $familyName;
+	var $styleName;
+	var $fullName;
+	var $uniqueFontID;
+	var $unitsPerEm;
+	var $bbox;
+	var $capHeight;
+	var $stemV;
+	var $italicAngle;
+	var $flags;
+	var $underlinePosition;
+	var $underlineThickness;
+	var $charWidths;
+	var $defaultWidth;
+	var $maxStrLenRead;
 
 	function __construct() {
 		$this->maxStrLenRead = 200000;	// Maximum size of glyf table to read in as string (otherwise reads each glyph from file)
@@ -949,6 +949,11 @@ var $maxStrLenRead;
 		$this->charWidths[1] = chr($nCharWidths & 0xFF);
 	}
 
+	/**
+	 * @param $numberOfHMetrics
+	 * @param $gid
+	 * @return string
+	 */
 	function getHMetric($numberOfHMetrics, $gid) {
 		$start = $this->seek_table("hmtx");
 		if ($gid < $numberOfHMetrics) {
@@ -964,7 +969,7 @@ var $maxStrLenRead;
 		return $hm;
 	}
 
-	function getLOCA($indexToLocFormat, $numGlyphs) {
+	function getLOCA( $indexToLocFormat, $numGlyphs ) {
 		$start = $this->seek_table('loca');
 		$this->glyphPos = array();
 		if ($indexToLocFormat == 0) {
@@ -984,7 +989,6 @@ var $maxStrLenRead;
 		else 
 			die('Unknown location table format '.$indexToLocFormat);
 	}
-
 
 	// CMAP Format 4
 	function getCMAP4($unicode_cmap_offset, &$glyphToChar, &$charToGlyph ) {
@@ -1030,8 +1034,7 @@ var $maxStrLenRead;
 		}
 	}
 
-
-		// Put the TTF file together
+	// Put the TTF file together
 	function endTTFile(&$stm) {
 		$stm = '';
 		$numTables = count($this->otables);
@@ -1077,13 +1080,7 @@ var $maxStrLenRead;
 		$checksum = $this->sub32(array(0xB1B0,0xAFBA), $checksum);
 		$chk = pack("nn", $checksum[0],$checksum[1]);
 		$stm = $this->splice($stm,($head_start + 8),$chk);
+
 		return $stm ;
 	}
-
-
-
-
 }
-
-
-?>
