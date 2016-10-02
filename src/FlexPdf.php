@@ -865,19 +865,14 @@ class FlexPdf {
 				$this->error( 'Undefined font: ' . $family . ' ' . $style );
 			}
 		}
+
 		// Select it
 		$this->FontFamily = $family;
 		$this->FontStyle = $style;
 		$this->FontSizePt = $size;
 		$this->FontSize = $size/$this->nScaleFactor;
 		$this->CurrentFont = &$this->fonts[$fontkey];
-
-		if ( $this->fonts[$fontkey]['type']=='TTF') {
-			$this->unifontSubset = true;
-		}
-		else {
-			$this->unifontSubset = false;
-		}
+		$this->unifontSubset = ( $this->fonts[$fontkey]['type']=='TTF');
 
 		if ( $this->nPageNumber > 0 ) {
 			$this->_out( sprintf( 'BT /F%d %.2F Tf ET', $this->CurrentFont['i'], $this->FontSizePt ) );
@@ -976,7 +971,7 @@ class FlexPdf {
 			$txt2
 		);
 
-		if ( $this->underline && $txt!='') {
+		if ( $this->underline && $txt != '' ) {
 			$s .= ' ' . $this->_dounderline( $x, $y, $txt );
 		}
 		if ( $this->ColorFlag ) {
@@ -1373,7 +1368,7 @@ class FlexPdf {
 				$this->cell( $l, $nHeight, mb_substr( $s, $j, $i-$j, 'UTF-8' ), 0, 0, '', false, $sLink );
 			}
 			else {
-				$this->cell($l,$nHeight,substr($s,$j),0,0,'',false,$sLink);
+				$this->cell( $l, $nHeight, substr( $s, $j ), 0, 0, '', false, $sLink );
 			}
 		}
 	}
@@ -1808,23 +1803,36 @@ class FlexPdf {
 		// Underline text
 		$up = $this->CurrentFont['up'];
 		$ut = $this->CurrentFont['ut'];
-		$w = $this->GetStringWidth($txt)+$this->ws*substr_count($txt,' ');
-		return sprintf('%.2F %.2F %.2F %.2F re f',$x*$this->nScaleFactor,($this->h-($y-$up/1000*$this->FontSize))*$this->nScaleFactor,$w*$this->nScaleFactor,-$ut/1000*$this->FontSizePt);
+		$w = $this->getStringWidth($txt)+$this->ws*substr_count($txt,' ');
+		return sprintf(
+			'%.2F %.2F %.2F %.2F re f',
+			$x*$this->nScaleFactor,
+			($this->h-($y-$up/1000*$this->FontSize))*$this->nScaleFactor,
+			$w*$this->nScaleFactor,
+			-$ut/1000*$this->FontSizePt
+		);
 	}
 
 	private function _parsejpg($file) {
 		// Extract info from a JPEG file
 		$a = getimagesize($file);
-		if(!$a)
-			$this->Error('Missing or incorrect image file: '.$file);
-		if($a[2]!=2)
-			$this->Error('Not a JPEG file: '.$file);
-		if(!isset($a['channels']) || $a['channels']==3)
+		if(!$a) {
+			$this->error( 'Missing or incorrect image file: ' . $file );
+		}
+
+		if($a[2]!=2) {
+			$this->error( 'Not a JPEG file: ' . $file );
+		}
+
+		if(!isset($a['channels']) || $a['channels']==3) {
 			$colspace = 'DeviceRGB';
-		elseif($a['channels']==4)
+		}
+		else if($a['channels']==4) {
 			$colspace = 'DeviceCMYK';
-		else
+		}
+		else {
 			$colspace = 'DeviceGray';
+		}
 		$bpc = isset($a['bits']) ? $a['bits'] : 8;
 		$data = file_get_contents($file);
 		return array('w'=>$a[0], 'h'=>$a[1], 'cs'=>$colspace, 'bpc'=>$bpc, 'f'=>'DCTDecode', 'data'=>$data);
@@ -1833,8 +1841,9 @@ class FlexPdf {
 	private function _parsepng($file) {
 		// Extract info from a PNG file
 		$f = fopen($file,'rb');
-		if(!$f)
-			$this->Error('Can\'t open image file: '.$file);
+		if( !$f ) {
+			$this->error( 'Can\'t open image file: ' . $file );
+		}
 		$info = $this->_parsepngstream($f,$file);
 		fclose($f);
 		return $info;
@@ -1842,8 +1851,9 @@ class FlexPdf {
 
 	private function _parsepngstream($f, $file) {
 		// Check signature
-		if($this->_readstream($f,8)!=chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10))
-			$this->Error('Not a PNG file: '.$file);
+		if($this->_readstream($f,8)!=chr(137).'PNG'.chr(13).chr(10).chr(26).chr(10)) {
+			$this->error( 'Not a PNG file: ' . $file );
+		}
 
 		// Read header chunk
 		$this->_readstream($f,4);
@@ -1987,14 +1997,14 @@ class FlexPdf {
 	private function _parsegif( $file ) {
 		// Extract info from a GIF file (via PNG conversion)
 		if ( !function_exists('imagepng')) {
-			$this->Error( 'GD extension is required for GIF support' );
+			$this->error( 'GD extension is required for GIF support' );
 		}
 		if ( !function_exists('imagecreatefromgif')) {
-			$this->Error( 'GD has no GIF read support' );
+			$this->error( 'GD has no GIF read support' );
 		}
 		$im = imagecreatefromgif($file);
 		if ( !$im ) {
-			$this->Error( 'Missing or incorrect image file: ' . $file );
+			$this->error( 'Missing or incorrect image file: ' . $file );
 		}
 		imageinterlace($im,0);
 		$f = @fopen('php://temp','rb+');
@@ -2027,20 +2037,21 @@ class FlexPdf {
 
 	/**
 	 * Begin a new object within the document.
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _newobj() {
+	private function _newobj(): FlexPdf {
 		$this->nObjectNumber++;
 		$this->aObjectOffsets[$this->nObjectNumber] = strlen( $this->sBuffer );
+
 		$this->_out( $this->nObjectNumber.' 0 obj' );
 		return $this;
 	}
 
 	/**
 	 * @param string $sString
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _putstream( string $sString ) {
+	private function _putstream( string $sString ): FlexPdf {
 		return $this
 			->_out( 'stream' )
 			->_out( $sString )
@@ -2050,9 +2061,9 @@ class FlexPdf {
 	/**
 	 * Adds a line to the document, always appended with a newline
 	 * @param string $sString
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	private function _out( string $sString ) {
+	private function _out( string $sString ): FlexPdf {
 		if ( $this->sDocState == 2 ) {
 			$this->aPages[$this->nPageNumber] .= $sString . "\n";
 		}
@@ -2539,59 +2550,56 @@ class FlexPdf {
 		$this->_out('/W ['.$w.' ]');
 	}
 
-	function _putimages()
-	{
-		foreach(array_keys($this->images) as $file)
-		{
+	function _putimages() {
+		foreach(array_keys($this->images) as $file) {
 			$this->_putimage($this->images[$file]);
 			unset($this->images[$file]['data']);
 			unset($this->images[$file]['smask']);
 		}
 	}
 
-	function _putimage(&$info)
-	{
+	function _putimage(&$info) {
 		$this->_newobj();
 		$info['n'] = $this->nObjectNumber;
 		$this->_out('<</Type /XObject');
 		$this->_out('/Subtype /Image');
 		$this->_out('/Width '.$info['w']);
 		$this->_out('/Height '.$info['h']);
-		if($info['cs']=='Indexed')
-			$this->_out('/ColorSpace [/Indexed /DeviceRGB '.(strlen($info['pal'])/3-1).' '.($this->nObjectNumber+1).' 0 R]');
-		else
-		{
+		if($info['cs']=='Indexed') {
+			$this->_out( '/ColorSpace [/Indexed /DeviceRGB ' . ( strlen( $info['pal'] ) / 3 - 1 ) . ' ' . ( $this->nObjectNumber + 1 ) . ' 0 R]' );
+		}
+		else {
 			$this->_out('/ColorSpace /'.$info['cs']);
 			if($info['cs']=='DeviceCMYK')
 				$this->_out('/Decode [1 0 1 0 1 0 1 0]');
 		}
 		$this->_out('/BitsPerComponent '.$info['bpc']);
-		if(isset($info['f']))
-			$this->_out('/Filter /'.$info['f']);
-		if(isset($info['dp']))
-			$this->_out('/DecodeParms <<'.$info['dp'].'>>');
-		if(isset($info['trns']) && is_array($info['trns']))
-		{
+		if(isset($info['f'])) {
+			$this->_out( '/Filter /' . $info['f'] );
+		}
+		if(isset($info['dp'])) {
+			$this->_out( '/DecodeParms <<' . $info['dp'] . '>>' );
+		}
+		if(isset($info['trns']) && is_array($info['trns'])) {
 			$trns = '';
 			for($i=0;$i<count($info['trns']);$i++)
 				$trns .= $info['trns'][$i].' '.$info['trns'][$i].' ';
 			$this->_out('/Mask ['.$trns.']');
 		}
-		if(isset($info['smask']))
-			$this->_out('/SMask '.($this->nObjectNumber+1).' 0 R');
+		if(isset($info['smask'])) {
+			$this->_out( '/SMask ' . ( $this->nObjectNumber + 1 ) . ' 0 R' );
+		}
 		$this->_out('/Length '.strlen($info['data']).'>>');
 		$this->_putstream($info['data']);
 		$this->_out('endobj');
 		// Soft mask
-		if(isset($info['smask']))
-		{
+		if(isset($info['smask'])) {
 			$dp = '/Predictor 15 /Colors 1 /BitsPerComponent 8 /Columns '.$info['w'];
 			$smask = array('w'=>$info['w'], 'h'=>$info['h'], 'cs'=>'DeviceGray', 'bpc'=>8, 'f'=>$info['f'], 'dp'=>$dp, 'data'=>$info['smask']);
 			$this->_putimage($smask);
 		}
 		// Palette
-		if($info['cs']=='Indexed')
-		{
+		if($info['cs']=='Indexed') {
 			$filter = ($this->bCompress) ? '/Filter /FlateDecode ' : '';
 			$pal = ($this->bCompress) ? gzcompress($info['pal']) : $info['pal'];
 			$this->_newobj();
@@ -2601,13 +2609,20 @@ class FlexPdf {
 		}
 	}
 
-	function _putxobjectdict()
-	{
-		foreach($this->images as $image)
-			$this->_out('/I'.$image['i'].' '.$image['n'].' 0 R');
+	/**
+	 * @return FlexPdf
+	 */
+	function _putxobjectdict(): FlexPdf {
+		foreach($this->images as $image) {
+			$this->_out( '/I' . $image['i'] . ' ' . $image['n'] . ' 0 R' );
+		}
+		return $this
 	}
 
-	function _putresourcedict() {
+	/**
+	 * @return FlexPdf
+	 */
+	function _putresourcedict(): FlexPdf {
 		$this->_out('/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]');
 		$this->_out('/Font <<');
 		foreach($this->fonts as $font) {
@@ -2621,7 +2636,10 @@ class FlexPdf {
 		return $this;
 	}
 
-	private function _putresources() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function _putresources(): FlexPdf {
 		$this->_putfonts();
 		$this->_putimages();
 		// Resource dictionary
@@ -2659,18 +2677,19 @@ class FlexPdf {
 	}
 
 	private function _putcatalog() {
-		$this->_out('/Type /Catalog');
-		$this->_out('/Pages 1 0 R');
-		if($this->ZoomMode=='fullpage') {
+		$this->_out( '/Type /Catalog' );
+		$this->_out( '/Pages 1 0 R' );
+
+		if ( $this->ZoomMode == 'fullpage' ) {
 			$this->_out( '/OpenAction [3 0 R /Fit]' );
 		}
-		else if($this->ZoomMode=='fullwidth') {
+		else if ( $this->ZoomMode == 'fullwidth' ) {
 			$this->_out( '/OpenAction [3 0 R /FitH null]' );
 		}
-		else if ( $this->ZoomMode=='real') {
+		else if ( $this->ZoomMode == 'real' ) {
 			$this->_out( '/OpenAction [3 0 R /XYZ null null 1]' );
 		}
-		else if(!is_string($this->ZoomMode)) {
+		else if ( !is_string( $this->ZoomMode ) ) {
 			$this->_out( '/OpenAction [3 0 R /XYZ null null ' . sprintf( '%.2F', $this->ZoomMode / 100 ) . ']' );
 		}
 
@@ -2758,18 +2777,22 @@ class FlexPdf {
 		for ($i = 0; $i < $len; $i++) {
 			$uni = -1;
 			$h = ord($str[$i]);
-			if ( $h <= 0x7F )
+			if ( $h <= 0x7F ) {
 				$uni = $h;
-			elseif ( $h >= 0xC2 ) {
-				if ( ($h <= 0xDF) && ($i < $len -1) )
-					$uni = ($h & 0x1F) << 6 | (ord($str[++$i]) & 0x3F);
-				elseif ( ($h <= 0xEF) && ($i < $len -2) )
-					$uni = ($h & 0x0F) << 12 | (ord($str[++$i]) & 0x3F) << 6
-						| (ord($str[++$i]) & 0x3F);
-				elseif ( ($h <= 0xF4) && ($i < $len -3) )
-					$uni = ($h & 0x0F) << 18 | (ord($str[++$i]) & 0x3F) << 12
-						| (ord($str[++$i]) & 0x3F) << 6
-						| (ord($str[++$i]) & 0x3F);
+			}
+			else if ( $h >= 0xC2 ) {
+				if ( ($h <= 0xDF) && ($i < $len -1) ) {
+					$uni = ( $h & 0x1F ) << 6 | ( ord( $str[++$i] ) & 0x3F );
+				}
+				else if ( ($h <= 0xEF) && ($i < $len -2) ) {
+					$uni = ( $h & 0x0F ) << 12 | ( ord( $str[++$i] ) & 0x3F ) << 6
+						| ( ord( $str[++$i] ) & 0x3F );
+				}
+				else if ( ($h <= 0xF4) && ($i < $len -3) ) {
+					$uni = ( $h & 0x0F ) << 18 | ( ord( $str[++$i] ) & 0x3F ) << 12
+						| ( ord( $str[++$i] ) & 0x3F ) << 6
+						| ( ord( $str[++$i] ) & 0x3F );
+				}
 			}
 			if ($uni >= 0) {
 				$out[] = $uni;
