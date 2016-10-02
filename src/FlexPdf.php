@@ -933,27 +933,56 @@ class FlexPdf {
 		return $this;
 	}
 
-	public function link( int $x, int $y, int $w, int $h, $link ) {
-		$this->PageLinks[$this->nPageNumber][] = array($x*$this->nScaleFactor, $this->hPt-$y*$this->nScaleFactor, $w*$this->nScaleFactor, $h*$this->nScaleFactor, $link);
+	/**
+	 * @param int $x
+	 * @param int $y
+	 * @param int $w
+	 * @param int $h
+	 * @param $link
+	 * @return FlexPdf
+	 */
+	public function link( int $x, int $y, int $w, int $h, $link ): FlexPdf {
+		$this->PageLinks[$this->nPageNumber][] = array(
+			$x * $this->nScaleFactor,
+			$this->hPt - $y * $this->nScaleFactor,
+			$w * $this->nScaleFactor,
+			$h * $this->nScaleFactor,
+			$link
+		);
 		return $this;
 	}
 
-	public function text($x, $y, $txt) {
+	/**
+	 * @param $x
+	 * @param $y
+	 * @param $txt
+	 * @return FlexPdf
+	 */
+	public function text( $x, $y, $txt ): FlexPdf {
 		// Output a string
-		if ($this->unifontSubset)
-		{
-			$txt2 = '('.$this->_escape($this->UTF8ToUTF16BE($txt, false)).')';
-			foreach($this->UTF8StringToArray($txt) as $uni)
+		if ( $this->unifontSubset ) {
+			$txt2 = '('.$this->_escape( $this->UTF8ToUTF16BE( $txt, false ) ).')';
+			foreach ( $this->UTF8StringToArray( $txt ) as $uni ) {
 				$this->CurrentFont['subset'][$uni] = $uni;
+			}
 		}
-		else
-			$txt2 = '('.$this->_escape($txt).')';
-		$s = sprintf('BT %.2F %.2F Td %s Tj ET',$x*$this->nScaleFactor,($this->h-$y)*$this->nScaleFactor,$txt2);
-		if($this->underline && $txt!='')
-			$s .= ' '.$this->_dounderline($x,$y,$txt);
-		if($this->ColorFlag)
-			$s = 'q '.$this->TextColor.' '.$s.' Q';
-		$this->_out($s);
+		else {
+			$txt2 = '(' . $this->_escape( $txt ) . ')';
+		}
+		$s = sprintf(
+			'BT %.2F %.2F Td %s Tj ET',
+			$x * $this->nScaleFactor,
+			($this->h-$y) * $this->nScaleFactor,
+			$txt2
+		);
+
+		if ( $this->underline && $txt!='') {
+			$s .= ' ' . $this->_dounderline( $x, $y, $txt );
+		}
+		if ( $this->ColorFlag ) {
+			$s = 'q ' . $this->TextColor . ' ' . $s . ' Q';
+		}
+		$this->_out( $s );
 		return $this;
 	}
 
@@ -1141,19 +1170,18 @@ class FlexPdf {
 			else {
 				$c=$s[$i];
 			}
-			if($c=="\n")
-			{
+			if ( $c == "\n" ) {
 				// Explicit line break
-				if($this->ws>0)
-				{
+				if($this->ws>0) {
 					$this->ws = 0;
 					$this->_out('0 Tw');
 				}
+
 				if ($this->unifontSubset) {
-					$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
+					$this->cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 				}
 				else {
-					$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
+					$this->cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 				}
 				$i++;
 				$sep = -1;
@@ -1165,8 +1193,7 @@ class FlexPdf {
 					$b = $b2;
 				continue;
 			}
-			if($c==' ')
-			{
+			if ( $c == ' ' ) {
 				$sep = $i;
 				$ls = $l;
 				$ns++;
@@ -1175,37 +1202,34 @@ class FlexPdf {
 			if ($this->unifontSubset) { $l += $this->GetStringWidth($c); }
 			else { $l += $cw[$c]*$this->FontSize/1000; }
 
-			if($l>$wmax)
-			{
+			if($l>$wmax) {
 				// Automatic line break
-				if($sep==-1)
-				{
-					if($i==$j)
+				if($sep==-1) {
+					if($i==$j) {
 						$i++;
-					if($this->ws>0)
-					{
+					}
+					if($this->ws>0) {
 						$this->ws = 0;
 						$this->_out('0 Tw');
 					}
 					if ($this->unifontSubset) {
-						$this->Cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
+						$this->cell($w,$h,mb_substr($s,$j,$i-$j,'UTF-8'),$b,2,$align,$fill);
 					}
 					else {
-						$this->Cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
+						$this->cell($w,$h,substr($s,$j,$i-$j),$b,2,$align,$fill);
 					}
 				}
-				else
-				{
-					if($align=='J')
-					{
+				else {
+					if($align=='J') {
 						$this->ws = ($ns>1) ? ($wmax-$ls)/($ns-1) : 0;
 						$this->_out(sprintf('%.3F Tw',$this->ws*$this->nScaleFactor));
 					}
+
 					if ($this->unifontSubset) {
-						$this->Cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),$b,2,$align,$fill);
+						$this->cell($w,$h,mb_substr($s,$j,$sep-$j,'UTF-8'),$b,2,$align,$fill);
 					}
 					else {
-						$this->Cell($w,$h,substr($s,$j,$sep-$j),$b,2,$align,$fill);
+						$this->cell($w,$h,substr($s,$j,$sep-$j),$b,2,$align,$fill);
 					}
 					$i = $sep+1;
 				}
@@ -1214,8 +1238,9 @@ class FlexPdf {
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if($border && $nl==2)
+				if($border && $nl==2) {
 					$b = $b2;
+				}
 			}
 			else {
 				$i++;
@@ -1241,7 +1266,7 @@ class FlexPdf {
 	/**
 	 * @return FlexPdf
 	 */
-	private function writeLineBreak() {
+	private function writeLineBreak(): FlexPdf {
 		return $this->_out( '0 Tw' );
 	}
 
