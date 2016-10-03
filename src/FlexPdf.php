@@ -2622,7 +2622,7 @@ class FlexPdf {
 		foreach($this->images as $image) {
 			$this->_out( '/I' . $image['i'] . ' ' . $image['n'] . ' 0 R' );
 		}
-		return $this
+		return $this;
 	}
 
 	/**
@@ -2660,7 +2660,10 @@ class FlexPdf {
 		return $this;
 	}
 
-	private function _putinfo() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function _putinfo(): FlexPdf {
 		$this->_out( '/Producer '.$this->_textstring( 'FlexPdf' ) );
 
 		if ( !empty( $this->title ) ) {
@@ -2679,10 +2682,14 @@ class FlexPdf {
 			$this->_out( '/Creator ' . $this->_textstring( $this->creator ) );
 		}
 		$this->_out( '/CreationDate '.$this->_textstring( 'D:'.@date( 'YmdHis' ) ) );
+
 		return $this;
 	}
 
-	private function _putcatalog() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function writeCatalog(): FlexPdf {
 		$this->_out( '/Type /Catalog' );
 		$this->_out( '/Pages 1 0 R' );
 
@@ -2737,7 +2744,7 @@ class FlexPdf {
 		// Catalog
 		$this->_newobj()
 			->_out('<<')
-			->_putcatalog()
+			->writeCatalog()
 			->_out('>>')
 			->_out('endobj');
 
