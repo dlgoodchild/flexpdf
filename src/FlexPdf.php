@@ -931,18 +931,18 @@ class FlexPdf {
 	/**
 	 * @param int $x
 	 * @param int $y
-	 * @param int $w
+	 * @param float $w
 	 * @param int $h
-	 * @param $link
+	 * @param $sLink
 	 * @return FlexPdf
 	 */
-	public function link( int $x, int $y, int $w, int $h, $link ): FlexPdf {
+	public function link( int $x, int $y, float $w, int $h, $sLink ): FlexPdf {
 		$this->PageLinks[$this->nPageNumber][] = array(
 			$x * $this->nScaleFactor,
 			$this->hPt - $y * $this->nScaleFactor,
 			$w * $this->nScaleFactor,
 			$h * $this->nScaleFactor,
-			$link
+			$sLink
 		);
 		return $this;
 	}
@@ -950,19 +950,19 @@ class FlexPdf {
 	/**
 	 * @param $x
 	 * @param $y
-	 * @param $txt
+	 * @param $sText
 	 * @return FlexPdf
 	 */
-	public function text( $x, $y, $txt ): FlexPdf {
+	public function text( $x, $y, string $sText ): FlexPdf {
 		// Output a string
 		if ( $this->unifontSubset ) {
-			$txt2 = '('.$this->_escape( $this->UTF8ToUTF16BE( $txt, false ) ).')';
-			foreach ( $this->UTF8StringToArray( $txt ) as $uni ) {
+			$txt2 = '('.$this->_escape( $this->UTF8ToUTF16BE( $sText, false ) ).')';
+			foreach ( $this->UTF8StringToArray( $sText ) as $uni ) {
 				$this->CurrentFont['subset'][$uni] = $uni;
 			}
 		}
 		else {
-			$txt2 = '(' . $this->_escape( $txt ) . ')';
+			$txt2 = '(' . $this->_escape( $sText ) . ')';
 		}
 		$s = sprintf(
 			'BT %.2F %.2F Td %s Tj ET',
@@ -971,8 +971,8 @@ class FlexPdf {
 			$txt2
 		);
 
-		if ( $this->underline && $txt != '' ) {
-			$s .= ' ' . $this->_dounderline( $x, $y, $txt );
+		if ( $this->underline && $sText != '' ) {
+			$s .= ' ' . $this->_dounderline( $x, $y, $sText );
 		}
 		if ( $this->ColorFlag ) {
 			$s = 'q ' . $this->TextColor . ' ' . $s . ' Q';
@@ -986,7 +986,7 @@ class FlexPdf {
 		return $this->bAutoPageBreak;
 	}
 
-	public function cell( $nWidth, $h = 0, string $txt = '', $border = 0, $ln = 0, string $align = '', bool $fill = false, string $link = '') {
+	public function cell( $nWidth, $h = 0, string $txt = '', $border = 0, $ln = 0, string $align = '', bool $fill = false, string $link = '' ) {
 		$k = $this->nScaleFactor;
 		if ( ( $this->nPosY + $h > $this->nPageBreakTrigger ) && !$this->InHeader && !$this->InFooter && $this->AcceptPageBreak() ) {
 			// Automatic page break
@@ -1030,16 +1030,16 @@ class FlexPdf {
 			$x = $this->nPosX;
 			$y = $this->nPosY;
 
-			if(strpos($border,'L')!==false) {
+			if ( strpos( $border,'L' ) !== false ) {
 				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - $y ) * $k, $x * $k, ( $this->h - ( $y + $h ) ) * $k );
 			}
-			if(strpos($border,'T')!==false) {
+			if ( strpos( $border,'T' ) !== false ) {
 				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - $y ) * $k, ( $x + $nWidth ) * $k, ( $this->h - $y ) * $k );
 			}
-			if(strpos($border,'R')!==false) {
+			if ( strpos( $border,'R') !== false ) {
 				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', ( $x + $nWidth ) * $k, ( $this->h - $y ) * $k, ( $x + $nWidth ) * $k, ( $this->h - ( $y + $h ) ) * $k );
 			}
-			if(strpos($border,'B')!==false) {
+			if ( strpos( $border,'B' ) !== false ) {
 				$s .= sprintf( '%.2F %.2F m %.2F %.2F l S ', $x * $k, ( $this->h - ( $y + $h ) ) * $k, ( $x + $nWidth ) * $k, ( $this->h - ( $y + $h ) ) * $k );
 			}
 		}
@@ -1061,13 +1061,15 @@ class FlexPdf {
 
 			// If multibyte, Tw has no effect - do word spacing using an adjustment before each space
 			if ($this->ws && $this->unifontSubset) {
-				foreach($this->UTF8StringToArray($txt) as $uni)
+				foreach($this->UTF8StringToArray($txt) as $uni) {
 					$this->CurrentFont['subset'][$uni] = $uni;
+				}
+
 				$space = $this->_escape($this->UTF8ToUTF16BE(' ', false));
 				$s .= sprintf('BT 0 Tw %.2F %.2F Td [',($this->nPosX+$dx)*$k,($this->h-($this->nPosY+.5*$h+.3*$this->FontSize))*$k);
 				$t = explode(' ',$txt);
 				$numt = count($t);
-				for($i=0;$i<$numt;$i++) {
+				for ( $i = 0; $i < $numt; $i++ ) {
 					$tx = $t[$i];
 					$tx = '('.$this->_escape($this->UTF8ToUTF16BE($tx, false)).')';
 					$s .= sprintf('%s ',$tx);
@@ -1080,46 +1082,50 @@ class FlexPdf {
 				$s .= ' ET';
 			}
 			else {
-				if ($this->unifontSubset)
-				{
+				if ($this->unifontSubset) {
 					$txt2 = '('.$this->_escape($this->UTF8ToUTF16BE($txt, false)).')';
-					foreach($this->UTF8StringToArray($txt) as $uni)
+					foreach($this->UTF8StringToArray($txt) as $uni) {
 						$this->CurrentFont['subset'][$uni] = $uni;
+					}
 				}
 				else
 					$txt2='('.str_replace(')','\\)',str_replace('(','\\(',str_replace('\\','\\\\',$txt))).')';
 				$s .= sprintf('BT %.2F %.2F Td %s Tj ET',($this->nPosX+$dx)*$k,($this->h-($this->nPosY+.5*$h+.3*$this->FontSize))*$k,$txt2);
 			}
-			if($this->underline)
-				$s .= ' '.$this->_dounderline($this->nPosX+$dx,$this->nPosY+.5*$h+.3*$this->FontSize,$txt);
-			if($this->ColorFlag)
+			if ( $this->underline ) {
+				$s .= ' ' . $this->_dounderline( $this->nPosX + $dx, $this->nPosY + .5 * $h + .3 * $this->FontSize, $txt );
+			}
+			if ( $this->ColorFlag ) {
 				$s .= ' Q';
-			if($link) {
-				$this->link( $this->nPosX + $dx, $this->nPosY + .5 * $h - .5 * $this->FontSize, $this->GetStringWidth( $txt ), $this->FontSize, $link );
+			}
+			if ( $link ) {
+				$this->link( $this->nPosX + $dx, $this->nPosY + .5 * $h - .5 * $this->FontSize, $this->getStringWidth( $txt ), $this->FontSize, $link );
 			}
 		}
-		if($s)
-			$this->_out($s);
+		if ( $s ) {
+			$this->_out( $s );
+		}
 		$this->lasth = $h;
-		if($ln>0)
-		{
+		if ( $ln > 0 ) {
 			// Go to next line
 			$this->nPosY += $h;
-			if($ln==1)
+			if($ln==1) {
 				$this->nPosX = $this->nMarginLeft;
+			}
 		}
-		else
+		else {
 			$this->nPosX += $nWidth;
+		}
 
 		return $this;
 	}
 
-	public function multiCell($w, $h, $txt, $border=0, $align='J', $fill=false)
-	{
+	public function multiCell( $w, $h, $txt, $border = 0, $align = 'J', $fill = false ) {
 		// Output text with automatic or explicit line breaks
 		$cw = &$this->CurrentFont['cw'];
-		if($w==0)
-			$w = $this->w-$this->nMarginRight-$this->nPosX;
+		if($w==0) {
+			$w = $this->w - $this->nMarginRight - $this->nPosX;
+		}
 		$wmax = ($w-2*$this->bMarginCell);
 		$s = str_replace("\r",'',$txt);
 		if ($this->unifontSubset) {
@@ -1128,26 +1134,26 @@ class FlexPdf {
 		}
 		else {
 			$nb = strlen($s);
-			if($nb>0 && $s[$nb-1]=="\n")
+			if($nb>0 && $s[$nb-1]=="\n") {
 				$nb--;
+			}
 		}
 		$b = 0;
-		if($border)
-		{
-			if($border==1)
-			{
+		if ( $border ) {
+			if ( $border == 1 ) {
 				$border = 'LTRB';
 				$b = 'LRT';
 				$b2 = 'LR';
 			}
-			else
-			{
+			else {
 				$b2 = '';
-				if(strpos($border,'L')!==false)
+				if ( strpos( $border, 'L' ) !== false ) {
 					$b2 .= 'L';
-				if(strpos($border,'R')!==false)
+				}
+				if ( strpos( $border, 'R' ) !== false ) {
 					$b2 .= 'R';
-				$b = (strpos($border,'T')!==false) ? $b2.'T' : $b2;
+				}
+				$b = ( strpos( $border, 'T' ) !== false )? $b2.'T': $b2;
 			}
 		}
 		$sep = -1;
@@ -1156,8 +1162,7 @@ class FlexPdf {
 		$l = 0;
 		$ns = 0;
 		$nl = 1;
-		while($i<$nb)
-		{
+		while ( $i < $nb ) {
 			// Get next character
 			if ($this->unifontSubset) {
 				$c = mb_substr($s,$i,1,'UTF-8');
@@ -1165,6 +1170,7 @@ class FlexPdf {
 			else {
 				$c=$s[$i];
 			}
+
 			if ( $c == "\n" ) {
 				// Explicit line break
 				if($this->ws>0) {
@@ -1180,7 +1186,7 @@ class FlexPdf {
 				$l = 0;
 				$ns = 0;
 				$nl++;
-				if($border && $nl==2) {
+				if ( $border && $nl == 2 ) {
 					$b = $b2;
 				}
 				continue;
@@ -1198,9 +1204,9 @@ class FlexPdf {
 				$l += $cw[$c]*$this->FontSize/1000;
 			}
 
-			if($l>$wmax) {
+			if ( $l > $wmax ) {
 				// Automatic line break
-				if($sep==-1) {
+				if ( $sep == -1 ) {
 					if ( $i == $j ) {
 						$i++;
 					}
@@ -1212,7 +1218,7 @@ class FlexPdf {
 					$this->cell( $w, $h, $this->subString( $s, $j, $i-$j ), $b, 2, $align, $fill );
 				}
 				else {
-					if($align=='J') {
+					if ( $align == 'J' ) {
 						$this->ws = ($ns>1) ? ($wmax-$ls)/($ns-1) : 0;
 						$this->_out(sprintf('%.3F Tw',$this->ws*$this->nScaleFactor));
 					}
@@ -1379,7 +1385,7 @@ class FlexPdf {
 	 * @param int $nLength
 	 * @return string
 	 */
-	public function subString( string $sText, int $nStart, int $nLength ) {
+	public function subString( string $sText, int $nStart, int $nLength ): string {
 		return (
 			$this->unifontSubset?
 				mb_substr( $sText, $nStart, $nLength, 'UTF-8' ):
@@ -1389,9 +1395,9 @@ class FlexPdf {
 
 	/**
 	 * @param int $nLineHeight
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function linefeed( $nLineHeight = null ) {
+	public function linefeed( $nLineHeight = null ): FlexPdf {
 		// Line feed; default value is last cell height
 		$this->nPosX = $this->nMarginLeft;
 		if ( $nLineHeight === null ) {
@@ -2616,7 +2622,7 @@ class FlexPdf {
 		foreach($this->images as $image) {
 			$this->_out( '/I' . $image['i'] . ' ' . $image['n'] . ' 0 R' );
 		}
-		return $this
+		return $this;
 	}
 
 	/**
@@ -2654,7 +2660,10 @@ class FlexPdf {
 		return $this;
 	}
 
-	private function _putinfo() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function _putinfo(): FlexPdf {
 		$this->_out( '/Producer '.$this->_textstring( 'FlexPdf' ) );
 
 		if ( !empty( $this->title ) ) {
@@ -2673,10 +2682,14 @@ class FlexPdf {
 			$this->_out( '/Creator ' . $this->_textstring( $this->creator ) );
 		}
 		$this->_out( '/CreationDate '.$this->_textstring( 'D:'.@date( 'YmdHis' ) ) );
+
 		return $this;
 	}
 
-	private function _putcatalog() {
+	/**
+	 * @return FlexPdf
+	 */
+	private function writeCatalog(): FlexPdf {
 		$this->_out( '/Type /Catalog' );
 		$this->_out( '/Pages 1 0 R' );
 
@@ -2731,7 +2744,7 @@ class FlexPdf {
 		// Catalog
 		$this->_newobj()
 			->_out('<<')
-			->_putcatalog()
+			->writeCatalog()
 			->_out('>>')
 			->_out('endobj');
 
