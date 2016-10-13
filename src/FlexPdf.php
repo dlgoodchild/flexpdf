@@ -32,6 +32,13 @@ class FlexPdf {
 
 	private $aPages;              // array containing pages
 
+	/**
+	 * 0 = uninitialised
+	 * 1 = initialised/open
+	 * 2 = page opened
+	 * 3 = closed/finished
+	 * @var int
+	 */
 	private $sDocState;              // current document state
 
 	private $bCompress;           // compression flag
@@ -418,17 +425,17 @@ class FlexPdf {
 	}
 
 	/**
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function open() {
+	public function open(): FlexPdf {
 		$this->sDocState = 1;
 		return $this;
 	}
 
 	/**
-	 * @return $this
+	 * @return FlexPdf
 	 */
-	public function close() {
+	public function close(): FlexPdf {
 		// Terminate document
 		if ( $this->sDocState == 3 ) {
 			return $this;
@@ -2112,7 +2119,7 @@ class FlexPdf {
 			$this->_newobj();
 			$this->_out('<</Type /Page');
 			$this->_out('/Parent 1 0 R');
-			if(isset($this->PageSizes[$n])) {
+			if ( isset($this->PageSizes[$n] ) ) {
 				$this->_out( sprintf( '/MediaBox [0 0 %.2F %.2F]', $this->PageSizes[$n][0], $this->PageSizes[$n][1] ) );
 			}
 			$this->_out('/Resources 2 0 R');
@@ -2724,9 +2731,13 @@ class FlexPdf {
 	}
 
 	private function _puttrailer() {
-		$this->_out('/Size '.($this->nObjectNumber+1));
-		$this->_out('/Root '.$this->nObjectNumber.' 0 R');
-		$this->_out('/Info '.($this->nObjectNumber-1).' 0 R');
+		$this
+			->_out( 'trailer')
+			->_out( '<<' )
+			->_out( '/Size '.($this->nObjectNumber+1) )
+			->_out( '/Root '.$this->nObjectNumber.' 0 R' )
+			->_out( '/Info '.($this->nObjectNumber-1).' 0 R' )
+			->_out( '>>' );
 		return $this;
 	}
 
@@ -2760,10 +2771,7 @@ class FlexPdf {
 
 		// Trailer
 		$this
-			->_out( 'trailer')
-			->_out( '<<')
 			->_puttrailer()
-			->_out( '>>')
 			->_out( 'startxref')
 			->_out( ''.$o )
 			->_out('%%EOF');
@@ -2774,9 +2782,9 @@ class FlexPdf {
 	}
 
 	// Converts UTF-8 strings to UTF16-BE.
-	private function UTF8ToUTF16BE( $str, $setbom=true ) {
-		$outstr = "";
-		if ($setbom) {
+	private function UTF8ToUTF16BE( $str, bool $setbom = true ): string {
+		$outstr = '';
+		if ( $setbom ) {
 			$outstr .= "\xFE\xFF"; // Byte Order Mark (BOM)
 		}
 		$outstr .= mb_convert_encoding($str, 'UTF-16BE', 'UTF-8');
@@ -2784,9 +2792,9 @@ class FlexPdf {
 	}
 
 	// Converts UTF-8 strings to codepoints array
-	private function UTF8StringToArray( $str ) {
+	private function UTF8StringToArray( string $str ): array {
 		$out = array();
-		$len = strlen($str);
+		$len = strlen( $str );
 		for ($i = 0; $i < $len; $i++) {
 			$uni = -1;
 			$h = ord($str[$i]);
